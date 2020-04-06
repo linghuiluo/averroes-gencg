@@ -1,0 +1,8 @@
+-r dacapo.antlr.*:antlr.** 
+-m dacapo.antlr.Main2 
+-a ${averroes_data}/benchmarks/dacapo/antlr.jar 
+-l ${averroes_data}/benchmarks/dacapo/antlr-deps.jar 
+-d ${averroes_data}/benchmarks/dacapo/antlr.dyn 
+-t ${averroes_data}/benchmarks/dacapo/antlr.tfx 
+-o output 
+-j ${averroes_data}/jre/1.6.0_45
