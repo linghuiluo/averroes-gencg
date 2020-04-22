@@ -4,3 +4,6 @@ out/
 .settings/
 build/
 bin/
+output/
+.classpath
+.project

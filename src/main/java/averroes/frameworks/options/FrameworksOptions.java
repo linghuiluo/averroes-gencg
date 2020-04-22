@@ -7,6 +7,9 @@ import org.apache.commons.io.filefilter.TrueFileFilter;
 import soot.SourceLocator;
 
 import java.io.File;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
@@ -206,11 +209,28 @@ public final class FrameworksOptions {
      */
     public static List<String> getClasses(String prefix) {
         return getInputs().stream()
-                .map(p -> SourceLocator.v().getClassesUnder(p, prefix))
+                .map(p -> getClassesUnder(p, prefix))
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
     }
 
+    
+    private static List<String> getClassesUnder(String aPath, String prefix)
+    {  	// This method calls SourceLocator.v().getClassesUnder(aPath, prefix) 
+    	// which is not public accessible in 3.3.0. 
+    	try {
+    	Class c= Class.forName("soot.SourceLocator");
+    	Class<?>[] paras=new Class<?>[2];
+    	Class stringClass=Class.forName("java.lang.String");
+    	paras[0]=stringClass;
+    	paras[1]=stringClass;
+    	Method method =c.getDeclaredMethod("getClassesUnder",paras);
+    	method.setAccessible(true);
+			return (List<String>)method.invoke(SourceLocator.v(), aPath, prefix);
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | ClassNotFoundException e) {
+			throw new RuntimeException(e);
+		}
+    }
     /**
      * The directory to which Averroes will write any output files/folders.
      *

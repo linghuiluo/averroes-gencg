@@ -1,8 +1,13 @@
 plugins {
-    id 'scala'
+    id 'java-library'
 }
 
-group 'ca.uwaterloo.plg'
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+group 'de.upb.swt'
 version '1.0-SNAPSHOT'
 
 repositories {
@@ -11,19 +16,16 @@ repositories {
 
 dependencies {
     testImplementation 'junit:junit:4.12'
-    testImplementation 'org.scalatest:scalatest_2.13:3.0.8'
-//    testImplementation 'de.tud.sse:soot-infoflow:2.7.1.1'
-//    testImplementation 'de.tud.sse:soot-infoflow:2.7.1.1:tests'
-    testImplementation 'org.slf4j:slf4j-simple:1.7.5'
-
-//    implementation 'ca.mcgill.sable:soot:3.3.0'
-    implementation files('libs/sootclasses-trunk-jar-with-dependencies.jar')
+    implementation 'org.slf4j:slf4j-api:1.7.5'
+    implementation 'org.slf4j:slf4j-simple:1.7.5'
+   	implementation 'ca.mcgill.sable:soot:3.3.0'
     implementation 'com.google.code.gson:gson:2.8.5'
     implementation 'commons-io:commons-io:2.6'
     implementation 'commons-cli:commons-cli:1.4'
     implementation 'org.apache.bcel:bcel:6.4.1'
-    implementation 'org.scala-lang:scala-library:2.13.0'
     implementation 'org.ow2.asm:asm:7.2'
-
     implementation files('libs/probe.jar')
+    //implementation files('libs/sootclasses-trunk-jar-with-dependencies.jar')
+    //testImplementation 'de.tud.sse:soot-infoflow:2.7.1.1'
+	//testImplementation 'de.tud.sse:soot-infoflow:2.7.1.1:tests'
 }
