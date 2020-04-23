@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import org.slf4j.LoggerFactory;
 import soot.Modifier;
 import soot.SootMethod;
 import soot.Type;
@@ -101,18 +102,21 @@ public class SootClassJson {
     MapDifference<String, HashSet<String>> objectCreationsDifference =
         Maps.difference(methodToObjectCreations, other.methodToObjectCreations);
     if (!objectCreationsDifference.areEqual()) {
-      System.out.println("There are some differences in object creations.");
-      System.out.println(
-          "Methods with different object creations between generated and expected code: "
-              + objectCreationsDifference.entriesDiffering());
-      System.out.println(
-          "Methods with object creations that only show up in generated code: "
-              + objectCreationsDifference.entriesOnlyOnLeft());
-      System.out.println(
-          "Method with object creations that only show up in expected code: "
-              + objectCreationsDifference.entriesOnlyOnRight());
-      System.out.println();
-      System.out.println();
+      LoggerFactory.getLogger(getClass()).info("There are some differences in object creations.");
+      LoggerFactory.getLogger(getClass())
+          .info(
+              "Methods with different object creations between generated and expected code: "
+                  + objectCreationsDifference.entriesDiffering());
+      LoggerFactory.getLogger(getClass())
+          .info(
+              "Methods with object creations that only show up in generated code: "
+                  + objectCreationsDifference.entriesOnlyOnLeft());
+      LoggerFactory.getLogger(getClass())
+          .info(
+              "Method with object creations that only show up in expected code: "
+                  + objectCreationsDifference.entriesOnlyOnRight());
+      LoggerFactory.getLogger(getClass()).info("");
+      LoggerFactory.getLogger(getClass()).info("");
       return false;
     }
 
@@ -120,18 +124,21 @@ public class SootClassJson {
         Maps.difference(methodToInvocations, other.methodToInvocations);
     if (!invocationsDifference.areEqual()
         && !ignoreCalls(invocationsDifference.entriesOnlyOnLeft())) {
-      System.out.println("There are some differences in invocations.");
-      System.out.println(
-          "Methods with different invocations between generated and expected code: "
-              + invocationsDifference.entriesDiffering());
-      System.out.println(
-          "Methods with invocations that only show up in generated code: "
-              + invocationsDifference.entriesOnlyOnLeft());
-      System.out.println(
-          "Methods with invocations that only show up in expected code: "
-              + invocationsDifference.entriesOnlyOnRight());
-      System.out.println();
-      System.out.println();
+      LoggerFactory.getLogger(getClass()).info("There are some differences in invocations.");
+      LoggerFactory.getLogger(getClass())
+          .info(
+              "Methods with different invocations between generated and expected code: "
+                  + invocationsDifference.entriesDiffering());
+      LoggerFactory.getLogger(getClass())
+          .info(
+              "Methods with invocations that only show up in generated code: "
+                  + invocationsDifference.entriesOnlyOnLeft());
+      LoggerFactory.getLogger(getClass())
+          .info(
+              "Methods with invocations that only show up in expected code: "
+                  + invocationsDifference.entriesOnlyOnRight());
+      LoggerFactory.getLogger(getClass()).info("");
+      LoggerFactory.getLogger(getClass()).info("");
       return false;
     }
 
@@ -140,18 +147,21 @@ public class SootClassJson {
     if (!fieldReadsDifference.areEqual()) { // &&
       // !onlyGuardReadIsMissing(fieldReadsDifference.entriesOnlyOnLeft()))
       // {
-      System.out.println("There are some differences in field reads.");
-      System.out.println(
-          "Methods with different field reads between generated and expected code: "
-              + fieldReadsDifference.entriesDiffering());
-      System.out.println(
-          "Methods with field reads that only show up in generated code: "
-              + fieldReadsDifference.entriesOnlyOnLeft());
-      System.out.println(
-          "Methods with field reads that only show up in expected code: "
-              + fieldReadsDifference.entriesOnlyOnRight());
-      System.out.println();
-      System.out.println();
+      LoggerFactory.getLogger(getClass()).info("There are some differences in field reads.");
+      LoggerFactory.getLogger(getClass())
+          .info(
+              "Methods with different field reads between generated and expected code: "
+                  + fieldReadsDifference.entriesDiffering());
+      LoggerFactory.getLogger(getClass())
+          .info(
+              "Methods with field reads that only show up in generated code: "
+                  + fieldReadsDifference.entriesOnlyOnLeft());
+      LoggerFactory.getLogger(getClass())
+          .info(
+              "Methods with field reads that only show up in expected code: "
+                  + fieldReadsDifference.entriesOnlyOnRight());
+      LoggerFactory.getLogger(getClass()).info("");
+      LoggerFactory.getLogger(getClass()).info("");
       return false;
     }
 
@@ -159,18 +169,21 @@ public class SootClassJson {
         Maps.difference(methodToFieldWrites, other.methodToFieldWrites);
     if (!fieldWritesDifference.areEqual()
         && !ignoreFieldWrites(fieldWritesDifference.entriesOnlyOnLeft())) {
-      System.out.println("There are some differences in field writes.");
-      System.out.println(
-          "Methods with different field writes between generated and expected code: "
-              + fieldWritesDifference.entriesDiffering());
-      System.out.println(
-          "Methods with field writes that only show up in generated code: "
-              + fieldWritesDifference.entriesOnlyOnLeft());
-      System.out.println(
-          "Methods with field writes that only show up in expected code: "
-              + fieldWritesDifference.entriesOnlyOnRight());
-      System.out.println();
-      System.out.println();
+      LoggerFactory.getLogger(getClass()).info("There are some differences in field writes.");
+      LoggerFactory.getLogger(getClass())
+          .info(
+              "Methods with different field writes between generated and expected code: "
+                  + fieldWritesDifference.entriesDiffering());
+      LoggerFactory.getLogger(getClass())
+          .info(
+              "Methods with field writes that only show up in generated code: "
+                  + fieldWritesDifference.entriesOnlyOnLeft());
+      LoggerFactory.getLogger(getClass())
+          .info(
+              "Methods with field writes that only show up in expected code: "
+                  + fieldWritesDifference.entriesOnlyOnRight());
+      LoggerFactory.getLogger(getClass()).info("");
+      LoggerFactory.getLogger(getClass()).info("");
       return false;
     }
 

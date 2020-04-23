@@ -5,7 +5,8 @@
  * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  *
  * <p>Contributors: Karim Ali - initial API and implementation and/or initial documentation
- * *****************************************************************************
+ *
+ * <p>*****************************************************************************
  */
 package averroes.options;
 
@@ -72,7 +73,7 @@ public final class AverroesOptions {
           .desc("a list of the application JAR files separated by File.pathSeparator")
           .hasArg()
           .argName("path")
-          .required()
+          .required(false)
           .build();
 
   private static Option libraryJars =
@@ -145,6 +146,7 @@ public final class AverroesOptions {
           .addOption(applicationRegex)
           .addOption(mainClass)
           .addOption(applicationJars)
+          .addOption(androidApk)
           .addOption(libraryJars)
           .addOption(dynamicClassesFile)
           .addOption(tamiflexFactsFile)
@@ -382,5 +384,14 @@ public final class AverroesOptions {
    */
   public static boolean isEnableGuards() {
     return cmd.hasOption(enableGuards.getOpt());
+  }
+
+  public static boolean isAndroidApk() {
+    return cmd.hasOption(androidApk.getOpt());
+  }
+
+  public static String getAndroidApk() {
+    assert (!isAndroidApk());
+    return cmd.getOptionValue(androidApk.getOpt());
   }
 }

@@ -22,6 +22,7 @@ import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility class to organize the input JAR files to Averroes into two JAR files only: one for the
@@ -136,11 +137,12 @@ public class JarOrganizer {
     }
 
     File file = new File(fileName);
-    System.out.println(
-        "Processing "
-            + (fromApplicationArchive ? "input" : "library")
-            + " archive: "
-            + file.getAbsolutePath());
+    LoggerFactory.getLogger(getClass())
+        .info(
+            "Processing "
+                + (fromApplicationArchive ? "input" : "library")
+                + " archive: "
+                + file.getAbsolutePath());
 
     try {
       ZipFile archive = new ZipFile(file);
@@ -180,7 +182,7 @@ public class JarOrganizer {
        * library classes are also in the rt.jar or deps.jar. In such a case, we want
        * to add the classes from the jar file first and ignore the repetition.
        */
-      // System.out.println("class " + className +
+      //  LoggerFactory.getLogger(getClass()).info("class " + className +
       // " has already been added to this class provider.");
     } else {
       /*

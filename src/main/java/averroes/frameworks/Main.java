@@ -12,6 +12,7 @@ import averroes.util.io.Paths;
 import averroes.util.io.Printers;
 import java.io.IOException;
 import org.apache.commons.io.FileUtils;
+import org.slf4j.LoggerFactory;
 import soot.G;
 import soot.Scene;
 import soot.options.Options;
@@ -47,7 +48,8 @@ public class Main {
 
       // Set some soot parameters
       Options.v().classes().addAll(FrameworksOptions.getClasses());
-      System.out.println(FrameworksOptions.getSootClassPath());
+      LoggerFactory.getLogger(averroes.frameworks.Main.class)
+          .info(FrameworksOptions.getSootClassPath());
       Options.v().set_soot_classpath(FrameworksOptions.getSootClassPath());
       Options.v().set_validate(true);
       if (FrameworksOptions.isIncludeDependencies()) {
@@ -57,20 +59,23 @@ public class Main {
 
       // Load the necessary classes
       TimeUtils.reset();
-      System.out.println("Loading classes...");
+      LoggerFactory.getLogger(averroes.frameworks.Main.class).info("Loading classes...");
       Scene.v().loadNecessaryClasses();
       double soot = TimeUtils.elapsedTime();
-      System.out.println("Soot loaded the input classes in " + soot + " seconds.");
+      LoggerFactory.getLogger(averroes.frameworks.Main.class)
+          .info("Soot loaded the input classes in " + soot + " seconds.");
 
       // Add default constructors to all library classes
       SootSceneUtil.getClasses().forEach(CodeGenerator::createEmptyDefaultConstructor);
 
       // Now let Averroes do its thing
       TimeUtils.reset();
-      System.out.println("Creating Jimple bodies for framework methods...");
+      LoggerFactory.getLogger(averroes.frameworks.Main.class)
+          .info("Creating Jimple bodies for framework methods...");
       CodeGenerator.generateJimple();
 
-      System.out.println("Writing JSON files for framework methods...");
+      LoggerFactory.getLogger(averroes.frameworks.Main.class)
+          .info("Writing JSON files for framework methods...");
       // Print out JSON files
       Printers.printGeneratedJson();
 
@@ -78,13 +83,15 @@ public class Main {
       SootUtils.cleanupClasses();
 
       // Write class files for the generate model
-      System.out.println("Writing class files for framework methods...");
+      LoggerFactory.getLogger(averroes.frameworks.Main.class)
+          .info("Writing class files for framework methods...");
       ClassWriter.writeLibraryClassFiles();
       double averroes = TimeUtils.elapsedTime();
-      System.out.println(
-          "Placeholder framework classes created and Jimple validated in "
-              + averroes
-              + " seconds.");
+      LoggerFactory.getLogger(averroes.frameworks.Main.class)
+          .info(
+              "Placeholder framework classes created and Jimple validated in "
+                  + averroes
+                  + " seconds.");
 
       // Create the jar file, add all the generated class files to it, and, finally,
       // verify it using ASM.
@@ -94,16 +101,22 @@ public class Main {
       JarFile.verifyJarFile(Paths.placeholderFrameworkJarFile().toString());
 
       double bcel = TimeUtils.elapsedTime();
-      System.out.println("Placeholder framework JAR file verified in " + bcel + " seconds.");
-      System.out.println(
-          "Total time (without verification) is " + MathUtils.round(soot + averroes) + " seconds.");
-      System.out.println(
-          "Total time (with verification) is "
-              + MathUtils.round(soot + averroes + bcel)
-              + " seconds.");
+      LoggerFactory.getLogger(averroes.frameworks.Main.class)
+          .info("Placeholder framework JAR file verified in " + bcel + " seconds.");
+      LoggerFactory.getLogger(averroes.frameworks.Main.class)
+          .info(
+              "Total time (without verification) is "
+                  + MathUtils.round(soot + averroes)
+                  + " seconds.");
+      LoggerFactory.getLogger(averroes.frameworks.Main.class)
+          .info(
+              "Total time (with verification) is "
+                  + MathUtils.round(soot + averroes + bcel)
+                  + " seconds.");
 
       double total = TimeUtils.elapsedSplitTime();
-      System.out.println("Elapsed time: " + total + " seconds.");
+      LoggerFactory.getLogger(averroes.frameworks.Main.class)
+          .info("Elapsed time: " + total + " seconds.");
     } catch (IOException e) {
       e.printStackTrace();
     }

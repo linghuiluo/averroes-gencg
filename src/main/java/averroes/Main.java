@@ -19,6 +19,7 @@ import averroes.util.TimeUtils;
 import averroes.util.io.Paths;
 import java.util.Collections;
 import org.apache.commons.io.FileUtils;
+import org.slf4j.LoggerFactory;
 import soot.G;
 import soot.Scene;
 import soot.SootClass;
@@ -54,14 +55,16 @@ public class Main {
       FileUtils.cleanDirectory(Paths.classesOutputDirectory());
 
       // Organize the input JAR files
-      System.out.println();
-      System.out.println("Organizing the JAR files...");
+      LoggerFactory.getLogger(averroes.Main.class).info("");
+      LoggerFactory.getLogger(averroes.Main.class).info("Organizing the JAR files...");
       JarOrganizer jarOrganizer = new JarOrganizer();
       jarOrganizer.organizeInputJarFiles();
 
       // Print some statistics
-      System.out.println("# application classes: " + jarOrganizer.applicationClassNames().size());
-      System.out.println("# library classes: " + jarOrganizer.libraryClassNames().size());
+      LoggerFactory.getLogger(averroes.Main.class)
+          .info("# application classes: " + jarOrganizer.applicationClassNames().size());
+      LoggerFactory.getLogger(averroes.Main.class)
+          .info("# library classes: " + jarOrganizer.libraryClassNames().size());
 
       // Add the organized archives for the application and its
       // dependencies.
@@ -78,72 +81,82 @@ public class Main {
       Options.v().set_allow_phantom_refs(true);
 
       // Load the necessary classes
-      System.out.println();
-      System.out.println("Loading classes...");
+      LoggerFactory.getLogger(averroes.Main.class).info("");
+      LoggerFactory.getLogger(averroes.Main.class).info("Loading classes...");
       Scene.v().loadNecessaryClasses();
       Scene.v().setMainClassFromOptions();
       double soot = TimeUtils.elapsedTime();
-      System.out.println("Soot loaded the input classes in " + soot + " seconds.");
+      LoggerFactory.getLogger(averroes.Main.class)
+          .info("Soot loaded the input classes in " + soot + " seconds.");
 
       // Now let Averroes do its thing
       // First, create the class hierarchy
       TimeUtils.reset();
-      System.out.println();
-      System.out.println("Creating the class hierarchy for the placeholder library...");
+      LoggerFactory.getLogger(averroes.Main.class).info("");
+      LoggerFactory.getLogger(averroes.Main.class)
+          .info("Creating the class hierarchy for the placeholder library...");
       Hierarchy.v();
 
       // Output some initial statistics
-      System.out.println(
-          "# initial application classes: " + Hierarchy.v().getApplicationClasses().size());
-      System.out.println("# initial library classes: " + Hierarchy.v().getLibraryClasses().size());
-      System.out.println("# initial library methods: " + Hierarchy.v().getLibraryMethodCount());
-      System.out.println("# initial library fields: " + Hierarchy.v().getLibraryFieldCount());
-      System.out.println(
-          "# referenced library methods: " + Hierarchy.v().getReferencedLibraryMethodCount());
-      System.out.println(
-          "# referenced library fields: " + Hierarchy.v().getReferencedLibraryFieldCount());
+      LoggerFactory.getLogger(averroes.Main.class)
+          .info("# initial application classes: " + Hierarchy.v().getApplicationClasses().size());
+      LoggerFactory.getLogger(averroes.Main.class)
+          .info("# initial library classes: " + Hierarchy.v().getLibraryClasses().size());
+      LoggerFactory.getLogger(averroes.Main.class)
+          .info("# initial library methods: " + Hierarchy.v().getLibraryMethodCount());
+      LoggerFactory.getLogger(averroes.Main.class)
+          .info("# initial library fields: " + Hierarchy.v().getLibraryFieldCount());
+      LoggerFactory.getLogger(averroes.Main.class)
+          .info("# referenced library methods: " + Hierarchy.v().getReferencedLibraryMethodCount());
+      LoggerFactory.getLogger(averroes.Main.class)
+          .info("# referenced library fields: " + Hierarchy.v().getReferencedLibraryFieldCount());
 
       // Cleanup the hierarchy
-      System.out.println();
-      System.out.println("Cleaning up the class hierarchy...");
+      LoggerFactory.getLogger(averroes.Main.class).info("");
+      LoggerFactory.getLogger(averroes.Main.class).info("Cleaning up the class hierarchy...");
       Hierarchy.v().cleanupLibraryClasses();
 
       // Output some cleanup statistics
-      System.out.println(
-          "# removed library methods: " + Hierarchy.v().getRemovedLibraryMethodCount());
-      System.out.println(
-          "# removed library fields: " + Hierarchy.v().getRemovedLibraryFieldCount());
+      LoggerFactory.getLogger(averroes.Main.class)
+          .info("# removed library methods: " + Hierarchy.v().getRemovedLibraryMethodCount());
+      LoggerFactory.getLogger(averroes.Main.class)
+          .info("# removed library fields: " + Hierarchy.v().getRemovedLibraryFieldCount());
       // The +1 is for Finalizer.register that will be added later
-      System.out.println("# final library methods: " + (Hierarchy.v().getLibraryMethodCount() + 1));
-      System.out.println("# final library fields: " + Hierarchy.v().getLibraryFieldCount());
+      LoggerFactory.getLogger(averroes.Main.class)
+          .info("# final library methods: " + (Hierarchy.v().getLibraryMethodCount() + 1));
+      LoggerFactory.getLogger(averroes.Main.class)
+          .info("# final library fields: " + Hierarchy.v().getLibraryFieldCount());
 
       // Output some code generation statistics
-      System.out.println();
-      System.out.println("Generating extra library classes...");
-      System.out.println(
-          "# generated library classes: " + CodeGenerator.v().getGeneratedClassCount());
-      System.out.println(
-          "# generated library methods: " + CodeGenerator.v().getGeneratedMethodCount());
+      LoggerFactory.getLogger(averroes.Main.class).info("");
+      LoggerFactory.getLogger(averroes.Main.class).info("Generating extra library classes...");
+      LoggerFactory.getLogger(averroes.Main.class)
+          .info("# generated library classes: " + CodeGenerator.v().getGeneratedClassCount());
+      LoggerFactory.getLogger(averroes.Main.class)
+          .info("# generated library methods: " + CodeGenerator.v().getGeneratedMethodCount());
 
       // Create the Averroes library class
-      System.out.println();
-      System.out.println("Creating the skeleton for Averroes's main library class...");
+      LoggerFactory.getLogger(averroes.Main.class).info("");
+      LoggerFactory.getLogger(averroes.Main.class)
+          .info("Creating the skeleton for Averroes's main library class...");
       CodeGenerator.v().createAverroesLibraryClass();
 
       // Create method bodies to the library classes
-      System.out.println("Generating the method bodies for the placeholder library classes ...");
+      LoggerFactory.getLogger(averroes.Main.class)
+          .info("Generating the method bodies for the placeholder library classes ...");
       CodeGenerator.v().createLibraryMethodBodies();
 
       // Create empty classes for the basic classes required internally by
       // Soot
-      System.out.println("Generating empty basic library classes required by Soot...");
+      LoggerFactory.getLogger(averroes.Main.class)
+          .info("Generating empty basic library classes required by Soot...");
       for (SootClass basicClass :
           Hierarchy.v().getBasicClassesDatabase().getMissingBasicClasses()) {
         CodeGenerator.writeLibraryClassFile(basicClass);
       }
       double averroes = TimeUtils.elapsedTime();
-      System.out.println(
-          "Placeholder library classes created and validated in " + averroes + " seconds.");
+      LoggerFactory.getLogger(averroes.Main.class)
+          .info("Placeholder library classes created and validated in " + averroes + " seconds.");
 
       // Create the jar file and add all the generated class files to it.
       TimeUtils.reset();
@@ -152,27 +165,32 @@ public class Main {
       JarFile aveJarFile = new JarFile(Paths.averroesLibraryClassJarFile());
       aveJarFile.addAverroesLibraryClassFile();
       double bcel = TimeUtils.elapsedTime();
-      System.out.println("Placeholder library JAR file verified in " + bcel + " seconds.");
-      System.out.println(
-          "Total time (without verification) is " + MathUtils.round(soot + averroes) + " seconds.");
-      System.out.println(
-          "Total time (with verification) is "
-              + MathUtils.round(soot + averroes + bcel)
-              + " seconds.");
+      LoggerFactory.getLogger(averroes.Main.class)
+          .info("Placeholder library JAR file verified in " + bcel + " seconds.");
+      LoggerFactory.getLogger(averroes.Main.class)
+          .info(
+              "Total time (without verification) is "
+                  + MathUtils.round(soot + averroes)
+                  + " seconds.");
+      LoggerFactory.getLogger(averroes.Main.class)
+          .info(
+              "Total time (with verification) is "
+                  + MathUtils.round(soot + averroes + bcel)
+                  + " seconds.");
 
       double total = TimeUtils.elapsedSplitTime();
-      System.out.println("Elapsed time: " + total + " seconds.");
+      LoggerFactory.getLogger(averroes.Main.class).info("Elapsed time: " + total + " seconds.");
     } catch (Exception e) {
       e.printStackTrace();
     }
   }
 
   public static void usage() {
-    System.out.println();
-    System.out.println("Usage: java -jar averroes.jar [options]");
-    System.out.println("  -tfx : enable Tamiflex support");
-    System.out.println("  -dyn : enable dynamic classes support");
-    System.out.println();
+    LoggerFactory.getLogger(averroes.Main.class).info("");
+    LoggerFactory.getLogger(averroes.Main.class).info("Usage: java -jar averroes.jar [options]");
+    LoggerFactory.getLogger(averroes.Main.class).info("  -tfx : enable Tamiflex support");
+    LoggerFactory.getLogger(averroes.Main.class).info("  -dyn : enable dynamic classes support");
+    LoggerFactory.getLogger(averroes.Main.class).info("");
     System.exit(1);
   }
 }

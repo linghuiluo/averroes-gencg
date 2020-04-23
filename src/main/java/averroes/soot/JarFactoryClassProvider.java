@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import org.slf4j.LoggerFactory;
 import soot.ClassProvider;
 import soot.ClassSource;
 import soot.CoffiClassSource;
@@ -85,8 +86,8 @@ public class JarFactoryClassProvider implements ClassProvider {
    * @throws IOException
    */
   public void prepareJarFactoryClasspath() throws IOException {
-    System.out.println();
-    System.out.println("Preparing Averroes ...");
+    LoggerFactory.getLogger(getClass()).info("");
+    LoggerFactory.getLogger(getClass()).info("Preparing Averroes ...");
     addApplicationArchive();
     addLibraryArchive();
   }
@@ -156,11 +157,12 @@ public class JarFactoryClassProvider implements ClassProvider {
    * @throws IOException
    */
   public List<String> addArchive(File file, boolean isApplication) throws IOException {
-    System.out.println(
-        "Adding "
-            + (isApplication ? "application" : "library")
-            + " archive: "
-            + file.getAbsolutePath());
+    LoggerFactory.getLogger(getClass())
+        .info(
+            "Adding "
+                + (isApplication ? "application" : "library")
+                + " archive: "
+                + file.getAbsolutePath());
     List<String> result = new ArrayList<String>();
 
     ZipFile archive = new ZipFile(file);
