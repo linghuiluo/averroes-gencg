@@ -57,6 +57,15 @@ public final class AverroesOptions {
           .required()
           .build();
 
+  private static Option androidApk =
+      Option.builder("apk")
+          .longOpt("android-apk")
+          .desc("the android apk")
+          .hasArg()
+          .argName("path")
+          .required(false)
+          .build();
+
   private static Option applicationJars =
       Option.builder("a")
           .longOpt("application-jars")
@@ -246,7 +255,8 @@ public final class AverroesOptions {
    * @throws IOException
    */
   public static List<String> getDynamicLibraryClasses() throws IOException {
-    return getDynamicClasses().stream()
+    return getDynamicClasses()
+        .stream()
         .filter(AverroesOptions::isLibraryClass)
         .collect(Collectors.toList());
   }
@@ -258,7 +268,8 @@ public final class AverroesOptions {
    * @throws IOException
    */
   public static List<String> getDynamicApplicationClasses() throws IOException {
-    return getDynamicClasses().stream()
+    return getDynamicClasses()
+        .stream()
         .filter(AverroesOptions::isApplicationClass)
         .collect(Collectors.toList());
   }
@@ -310,10 +321,9 @@ public final class AverroesOptions {
   public static boolean isApplicationClass(ProbeClass probeClass) {
     for (String entry : getApplicationRegex()) {
       /*
-       * 1. If the entry ends with .* then this means it's a package. 2.
-       * If the entry ends with .** then it's a super package. 3. If the
-       * entry is **, then it's the default package. 4. Otherwise, it's
-       * the full class name.
+       * 1. If the entry ends with .* then this means it's a package. 2. If the entry
+       * ends with .** then it's a super package. 3. If the entry is **, then it's the
+       * default package. 4. Otherwise, it's the full class name.
        */
       if (entry.endsWith(".*")) {
         String pkg = entry.replace(".*", "");

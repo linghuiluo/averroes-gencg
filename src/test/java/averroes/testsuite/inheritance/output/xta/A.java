@@ -10,6 +10,7 @@ public class A {
   private Object set_m1;
   private Object set_m2;
   private Object set_m3;
+
   public A(B b) {
     set_m0 = this; // inferred from implicit "this" parameter
     set_m0 = b; // inferred from parameter "b"

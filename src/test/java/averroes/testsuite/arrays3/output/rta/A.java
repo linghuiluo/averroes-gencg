@@ -35,9 +35,8 @@ public class A {
     RTA.set = System.out;
     RTA.set = ((Object[]) RTA.set)[0]; // inferred for aaload "this.f1[0]"
     RTA.set.toString(); // inferred from call "this.f2.toString()" to Object.toString()
-    ((PrintStream) RTA.set)
-        .println(
-            (String) RTA.set); // inferred from call "System.out.println(this.f1[0].toString())"
+    ((PrintStream) RTA.set).println((String) RTA.set); // inferred from call
+    // "System.out.println(this.f1[0].toString())"
   }
 
   public Object m5() {
@@ -49,17 +48,10 @@ public class A {
 }
 
 /*
-class Client {
-	public void foo(A a){
-		a.m1(new Object[10]);
-		a.m2(new X());
-		a.m3();
-		a.m4();
-	}
-}
-
-class X {
-	@Override
-	public String toString(){ return "X"; }
-}
-*/
+ * class Client { public void foo(A a){ a.m1(new Object[10]); a.m2(new X());
+ * a.m3(); a.m4(); } }
+ *
+ * class X {
+ *
+ * @Override public String toString(){ return "X"; } }
+ */

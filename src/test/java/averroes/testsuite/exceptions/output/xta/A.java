@@ -3,6 +3,7 @@ package averroes.testsuite.exceptions.output.xta;
 public class A {
   @SuppressWarnings("unused")
   private Object set_m0;
+
   private Object set_m1;
   private Object set_m2;
   private Object set_m3;

@@ -12,7 +12,7 @@ package averroes.testsuite.example.output.rta;
 // return
 
 class List {
-  private String[] elements;  // Need to model private array fields
+  private String[] elements; // Need to model private array fields
   private String[] bla;
 
   public List() {
@@ -78,7 +78,8 @@ class List {
     if (RTA.guard) RTA.set = this;
     if (RTA.guard) RTA.set = new String[1];
 
-    RTA.set = elements; // inferred from read of field elements in "System.arraycopy(elements, 0, newElements, 0, size)"
+    RTA.set = elements; // inferred from read of field elements in "System.arraycopy(elements, 0,
+    // newElements, 0, size)"
 
     // method calls
     Object obj = RTA.set;

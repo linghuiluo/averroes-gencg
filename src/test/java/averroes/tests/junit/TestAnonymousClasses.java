@@ -1,7 +1,6 @@
 package averroes.tests.junit;
 
 import averroes.tests.CommonOptions;
-import averroes.tests.Main;
 import averroes.util.io.Paths;
 import org.junit.Before;
 import org.junit.Test;

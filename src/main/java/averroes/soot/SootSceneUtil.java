@@ -46,9 +46,9 @@ public class SootSceneUtil {
    */
   public static void addCommonDynamicClasses(ClassProvider provider) {
     /*
-     * For simulating the FileSystem class, we need the implementation of
-     * the FileSystem, but the classes are not loaded automatically due to
-     * the indirection via native code.
+     * For simulating the FileSystem class, we need the implementation of the
+     * FileSystem, but the classes are not loaded automatically due to the
+     * indirection via native code.
      */
     addCommonDynamicClass(provider, "java.io.UnixFileSystem");
     addCommonDynamicClass(provider, "java.io.WinNTFileSystem");

@@ -196,23 +196,33 @@ public class SootClassJson {
   }
 
   private boolean ignoreCalls(Map<String, HashSet<String>> callsDiff) {
-    // All method calls are from the default constructor of inner classes and to the default
+    // All method calls are from the default constructor of inner classes and to the
+    // default
     // constructor
-    // of the superclass. This is a hackish way of ignoring such calls, but necessary because
+    // of the superclass. This is a hackish way of ignoring such calls, but
+    // necessary because
     // Averroes
-    // needs those default constructors to generate valid bytecode that involves casting the LPT
-    // to the types required to prepare arguments for methods calls to constructors. Without those
+    // needs those default constructors to generate valid bytecode that involves
+    // casting the LPT
+    // to the types required to prepare arguments for methods calls to constructors.
+    // Without those
     // default
     // constructors, Averroes will just drop dead.
-    return callsDiff.keySet().stream()
+    return callsDiff
+            .keySet()
+            .stream()
             .allMatch(m -> m.contains("$") && m.endsWith("void <init>()>"))
-        && callsDiff.values().stream()
+        && callsDiff
+            .values()
+            .stream()
             .flatMap(Collection::stream)
             .allMatch(c -> c.endsWith("void <init>()>"));
   }
 
   private boolean ignoreFieldWrites(Map<String, HashSet<String>> fieldWritesDiff) {
-    return fieldWritesDiff.keySet().stream()
+    return fieldWritesDiff
+        .keySet()
+        .stream()
         .allMatch(m -> m.contains("$") && m.endsWith("void <init>()>"));
   }
 

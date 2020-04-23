@@ -125,9 +125,9 @@ public class AverroesJimpleBody {
     body.insertIdentityStmts();
 
     /*
-     * To generate correct bytecode, we need to initialize the object first
-     * by calling the superclass constructor before inserting any more
-     * statements. That is if this method is for a constructor.
+     * To generate correct bytecode, we need to initialize the object first by
+     * calling the superclass constructor before inserting any more statements. That
+     * is if this method is for a constructor.
      */
     if (isConstructor()) {
       Local base = body.getThisLocal();
@@ -907,7 +907,9 @@ public class AverroesJimpleBody {
    */
   public Local insertSpecialInvokeNewStmt(Type type, SootMethod toInvoke) {
     List<Value> args =
-        toInvoke.getParameterTypes().stream()
+        toInvoke
+            .getParameterTypes()
+            .stream()
             .map(p -> getCompatibleValue(p))
             .collect(Collectors.toList());
 

@@ -174,22 +174,20 @@ public class JarOrganizer {
 
     if (classNames.contains(className)) {
       /*
-       * Ignore, this means we encountered another copy of the class later
-       * on the path, it should be ignored. This is the case in some
-       * benchmarks where the jar file contains both application and
-       * library classes, while some of those library classes are also in
-       * the rt.jar or deps.jar. In such a case, we want to add the
-       * classes from the jar file first and ignore the repetition.
+       * Ignore, this means we encountered another copy of the class later on the
+       * path, it should be ignored. This is the case in some benchmarks where the jar
+       * file contains both application and library classes, while some of those
+       * library classes are also in the rt.jar or deps.jar. In such a case, we want
+       * to add the classes from the jar file first and ignore the repetition.
        */
       // System.out.println("class " + className +
       // " has already been added to this class provider.");
     } else {
       /*
-       * The class has to be from an application archive & an application
-       * class. Some classes in xalan are application classes based on
-       * their package name only, while they're in fact not part of the
-       * application and they come from rt.jar (e.g.,
-       * org.apache.xalan.templates.OutputProperties$1).
+       * The class has to be from an application archive & an application class. Some
+       * classes in xalan are application classes based on their package name only,
+       * while they're in fact not part of the application and they come from rt.jar
+       * (e.g., org.apache.xalan.templates.OutputProperties$1).
        */
       if (AverroesOptions.isApplicationClass(className) && fromApplicationArchive) {
         extractApplicationClassFile(archive, entry);

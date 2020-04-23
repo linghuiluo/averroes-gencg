@@ -12,6 +12,16 @@ package averroes;
 import averroes.exceptions.Assertions;
 import averroes.soot.Names;
 import averroes.util.io.Paths;
+import java.io.*;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.jar.Attributes;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
+import java.util.stream.Collectors;
 import org.apache.bcel.Repository;
 import org.apache.bcel.classfile.ClassFormatException;
 import org.apache.bcel.classfile.ClassParser;
@@ -28,17 +38,6 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.util.CheckClassAdapter;
 import soot.SootMethod;
-
-import java.io.*;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.jar.Attributes;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
-import java.util.jar.Manifest;
-import java.util.stream.Collectors;
 
 /**
  * A JAR file is a collection of class files. We use BCEL to verify that the generated JAR files
@@ -102,14 +101,15 @@ public class JarFile {
     File placeholderJar = Paths.placeholderLibraryJarFile();
 
     // Add the class files to the crafted JAR file.
-    FileUtils.listFiles(dir, new String[] {"class"}, true).stream()
+    FileUtils.listFiles(dir, new String[] {"class"}, true)
+        .stream()
         .filter(f -> !relativize(dir, f).equals(Names.AVERROES_LIBRARY_CLASS_BC_SIG + ".class"))
         .forEach(
             file -> {
               try {
                 String className = relativize(dir, file);
                 add(dir, file);
-                classFiles.add(className.replace("\\","/"));
+                classFiles.add(className.replace("\\", "/"));
               } catch (IOException e) {
                 e.printStackTrace();
               }
@@ -136,8 +136,10 @@ public class JarFile {
     File placeholderJar = Paths.placeholderFrameworkJarFile();
 
     // Add the class files to the crafted JAR file.
-    FileUtils.listFiles(dir, new String[] {"class"}, true).stream()
-        // .filter(f -> !relativize(dir, f).equals(Names.AVERROES_LIBRARY_CLASS_BC_SIG + ".class"))
+    FileUtils.listFiles(dir, new String[] {"class"}, true)
+        .stream()
+        // .filter(f -> !relativize(dir, f).equals(Names.AVERROES_LIBRARY_CLASS_BC_SIG +
+        // ".class"))
         .forEach(
             file -> {
               try {
@@ -179,7 +181,8 @@ public class JarFile {
     File averroesLibraryClassJar = Paths.averroesLibraryClassJarFile();
 
     File file =
-        FileUtils.listFiles(dir, new String[] {"class"}, true).stream()
+        FileUtils.listFiles(dir, new String[] {"class"}, true)
+            .stream()
             .filter(f -> relativize(dir, f).equals(Names.AVERROES_LIBRARY_CLASS_BC_SIG + ".class"))
             .collect(Collectors.toList())
             .get(0);
@@ -211,7 +214,8 @@ public class JarFile {
 
     // Now add the class files (including ones from placeholder JAR) to the
     // BCEL repository.
-    ClassParser parser = new ClassParser(averroesLibraryClassJar.getPath(), className.replace("\\","/"));
+    ClassParser parser =
+        new ClassParser(averroesLibraryClassJar.getPath(), className.replace("\\", "/"));
     JavaClass cls = parser.parse();
     bcelClasses.add(cls);
 
@@ -346,24 +350,29 @@ public class JarFile {
    */
   public static void verifyJarFile(String file) {
     try (java.util.jar.JarFile jarFile = new java.util.jar.JarFile(new File(file))) {
-      jarFile.stream().forEach(entry -> {
-        if (entry.getName().endsWith(".class")) {
-          try {
-            ClassReader classReader = new ClassReader(jarFile.getInputStream(entry));
-            ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
-            ClassVisitor classVisitor = new CheckClassAdapter(classWriter, true);
-            classReader.accept(classVisitor, 0);
+      jarFile
+          .stream()
+          .forEach(
+              entry -> {
+                if (entry.getName().endsWith(".class")) {
+                  try {
+                    ClassReader classReader = new ClassReader(jarFile.getInputStream(entry));
+                    ClassWriter classWriter =
+                        new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
+                    ClassVisitor classVisitor = new CheckClassAdapter(classWriter, true);
+                    classReader.accept(classVisitor, 0);
 
-            StringWriter stringWriter = new StringWriter();
-            PrintWriter printWriter = new PrintWriter(stringWriter);
-            CheckClassAdapter.verify(new ClassReader(classWriter.toByteArray()), false, printWriter);
+                    StringWriter stringWriter = new StringWriter();
+                    PrintWriter printWriter = new PrintWriter(stringWriter);
+                    CheckClassAdapter.verify(
+                        new ClassReader(classWriter.toByteArray()), false, printWriter);
 
-            Assertions.asmVerificationOk(stringWriter);
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
-        }
-      });
+                    Assertions.asmVerificationOk(stringWriter);
+                  } catch (IOException e) {
+                    e.printStackTrace();
+                  }
+                }
+              });
     } catch (IOException e) {
       e.printStackTrace();
     }

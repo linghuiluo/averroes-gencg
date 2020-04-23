@@ -5,6 +5,7 @@ import java.io.PrintStream;
 public class A {
   @SuppressWarnings("unused")
   private Object set_m0;
+
   private Object set_m1;
   private Object set_m2;
   private Object set_m3;
@@ -12,6 +13,7 @@ public class A {
   private Object set_m5;
   private Object[] f1; // set for field f1
   private Object f2; // set for field f2
+
   public A() {
     set_m0 = this; // inferred from implicit "this" parameter
   }
@@ -41,8 +43,8 @@ public class A {
     set_m4 = System.out;
     set_m4 = ((Object[]) set_m4)[0]; // inferred from aaload "this.f1[0]"
     set_m4.toString(); // inferred from call "this.f1[0].toString()"
-    ((PrintStream) set_m4)
-        .println((String) set_m4); // inferred from call "System.out.println(this.f1[0].toString())"
+    ((PrintStream) set_m4).println((String) set_m4); // inferred from call
+    // "System.out.println(this.f1[0].toString())"
   }
 
   public Object m5() {
@@ -54,17 +56,10 @@ public class A {
 }
 
 /*
-class Client {
-	public void foo(A a){
-		a.m1(new Object[10]);
-		a.m2(new X());
-		a.m3();
-		a.m4();
-	}
-}
-
-class X {
-	@Override
-	public String toString(){ return "X"; }
-}
-*/
+ * class Client { public void foo(A a){ a.m1(new Object[10]); a.m2(new X());
+ * a.m3(); a.m4(); } }
+ *
+ * class X {
+ *
+ * @Override public String toString(){ return "X"; } }
+ */

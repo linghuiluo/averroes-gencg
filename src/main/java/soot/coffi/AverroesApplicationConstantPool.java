@@ -121,10 +121,9 @@ public class AverroesApplicationConstantPool {
     Set<SootMethod> result = new HashSet<SootMethod>();
 
     /*
-     * This is only useful if the application class has any methods. Some
-     * classes will not have any methods in them, e.g.,
-     * org.jfree.data.xml.DatasetTags which is an interface that has some
-     * final constants only.
+     * This is only useful if the application class has any methods. Some classes
+     * will not have any methods in them, e.g., org.jfree.data.xml.DatasetTags which
+     * is an interface that has some final constants only.
      */
     if (applicationClass.getMethodCount() > 0) {
       ClassFile coffiClass = getCoffiClass(applicationClass);
@@ -179,9 +178,9 @@ public class AverroesApplicationConstantPool {
     // Add the classes whose name appear in the constant pool of application
     // classes
     // TODO
-    //		for (SootClass applicationClass : hierarchy.getApplicationClasses()) {
-    //			applicationClasses.addAll(findApplicationClassesReferencedByName(applicationClass));
-    //		}
+    // for (SootClass applicationClass : hierarchy.getApplicationClasses()) {
+    // applicationClasses.addAll(findApplicationClassesReferencedByName(applicationClass));
+    // }
     // applicationClasses.forEach(System.out::println);
     // System.out.println("averroes found " + substrings.size() +
     // " possible class name substrings");
@@ -220,10 +219,9 @@ public class AverroesApplicationConstantPool {
     // Set<String> substrings = new HashSet<String>();
 
     /*
-     * This is only useful if the application class has any methods. Some
-     * classes will not have any methods in them, e.g.,
-     * org.jfree.data.xml.DatasetTags which is an interface that has some
-     * final constants only.
+     * This is only useful if the application class has any methods. Some classes
+     * will not have any methods in them, e.g., org.jfree.data.xml.DatasetTags which
+     * is an interface that has some final constants only.
      */
     if (applicationClass.getMethodCount() > 0) {
       ClassFile coffiClass = getCoffiClass(applicationClass);
@@ -253,10 +251,9 @@ public class AverroesApplicationConstantPool {
       }
 
       /*
-       * This filtering has to take place here (i.e., for each class
-       * separately). Otherwise, we will collect a lot of class names that
-       * has substrings spanning multiple class files which is both wrong
-       * and imprecise.
+       * This filtering has to take place here (i.e., for each class separately).
+       * Otherwise, we will collect a lot of class names that has substrings spanning
+       * multiple class files which is both wrong and imprecise.
        */
       // result.addAll(classes
       // .stream()
@@ -305,10 +302,9 @@ public class AverroesApplicationConstantPool {
     Set<SootField> result = new HashSet<SootField>();
 
     /*
-     * This is only useful if the application class has any methods. Some
-     * classes will not have any methods in them, e.g.,
-     * org.jfree.data.xml.DatasetTags which is an interface that has some
-     * final constants only.
+     * This is only useful if the application class has any methods. Some classes
+     * will not have any methods in them, e.g., org.jfree.data.xml.DatasetTags which
+     * is an interface that has some final constants only.
      */
     if (applicationClass.getMethodCount() > 0) {
       ClassFile coffiClass = getCoffiClass(applicationClass);
@@ -341,10 +337,9 @@ public class AverroesApplicationConstantPool {
           SootField field;
 
           /*
-           * We have to do this ugly code. Try first and see if the
-           * field is not static. If it is static, then create a new
-           * fieldRef in the catch and resolve it again with isStatic
-           * = true.
+           * We have to do this ugly code. Try first and see if the field is not static.
+           * If it is static, then create a new fieldRef in the catch and resolve it again
+           * with isStatic = true.
            */
           try {
             field = fieldRef.resolve();

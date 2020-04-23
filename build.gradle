@@ -1,6 +1,9 @@
 plugins {
     id 'java-library'
 }
+plugins {
+  id "com.github.sherter.google-java-format" version "0.8" // format Java source files according to google-java-format
+}
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -18,7 +21,7 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     implementation 'org.slf4j:slf4j-api:1.7.5'
     implementation 'org.slf4j:slf4j-simple:1.7.5'
-   	implementation 'ca.mcgill.sable:soot:3.3.0'
+   	implementation 'ca.mcgill.sable:soot:4.0.0'
     implementation 'com.google.code.gson:gson:2.8.5'
     implementation 'commons-io:commons-io:2.6'
     implementation 'commons-cli:commons-cli:1.4'
@@ -29,3 +32,5 @@ dependencies {
     //testImplementation 'de.tud.sse:soot-infoflow:2.7.1.1'
 	//testImplementation 'de.tud.sse:soot-infoflow:2.7.1.1:tests'
 }
+
+

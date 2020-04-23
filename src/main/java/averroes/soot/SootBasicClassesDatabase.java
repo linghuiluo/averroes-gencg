@@ -19,7 +19,6 @@ import soot.Modifier;
 import soot.Scene;
 import soot.SootClass;
 import soot.SootMethod;
-import soot.Type;
 import soot.VoidType;
 
 /**

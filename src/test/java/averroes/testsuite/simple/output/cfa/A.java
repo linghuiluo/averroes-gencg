@@ -10,9 +10,9 @@ public class A {
   }
 
   public void m2(Object y, Object z) {
-    this.f2 =
-        y; // note that the model is flow-insensitive, so some precision is lost for flow-sensitive
-           // clients
+    this.f2 = y; // note that the model is flow-insensitive, so some precision is lost for
+    // flow-sensitive
+    // clients
     this.f3 = z;
   }
 

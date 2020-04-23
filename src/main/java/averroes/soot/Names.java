@@ -9,14 +9,14 @@
  */
 package averroes.soot;
 
-import soot.SootMethod;
-
 import java.io.File;
+import soot.SootMethod;
 
 public class Names {
   // Averroes-specific Classes
   public static final String AVERROES_LIBRARY_CLASS = "averroes.Library";
-  public static final String AVERROES_LIBRARY_CLASS_BC_SIG = "averroes"+ File.separator +"Library";
+  public static final String AVERROES_LIBRARY_CLASS_BC_SIG =
+      "averroes" + File.separator + "Library";
   public static final String AVERROES_ABSTRACT_LIBRARY_CLASS = "averroes.AbstractLibrary";
   public static final String RTA_CLASS = "rta.RTA";
   public static final String XTA_CLASS = "xta.XTA";

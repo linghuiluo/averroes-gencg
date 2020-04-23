@@ -128,7 +128,7 @@ public class JarFactoryClassProvider implements ClassProvider {
       }
     }
 
-    String className = path.replace('/', '.').replace(".class","");
+    String className = path.replace('/', '.').replace(".class", "");
 
     if (classes.containsKey(className)) {
       // This means we encountered another copy of the class later on the
@@ -215,8 +215,8 @@ public class JarFactoryClassProvider implements ClassProvider {
   public ClassSource find(String className) {
     if (classes.containsKey(className)) {
       ZipEntryResource zer = (ZipEntryResource) classes.get(className);
-      String entry= zer.entry().getName();
-      String archive= zer.archive().getName();
+      String entry = zer.entry().getName();
+      String archive = zer.archive().getName();
       FoundFile foundFile = new FoundFile(archive, entry);
       return new CoffiClassSource(className, foundFile);
     } else {

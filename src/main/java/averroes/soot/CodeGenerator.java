@@ -556,7 +556,7 @@ public class CodeGenerator {
     NopEliminator.v().transform(doItAllBody.getJimpleBody());
 
     // TODO
-     //System.out.println(doItAllBody.getJimpleBody());
+    // System.out.println(doItAllBody.getJimpleBody());
 
     // Finally validate the Jimple body
     doItAllBody.validate();
@@ -655,11 +655,12 @@ public class CodeGenerator {
 
     doItAllBody.insertAndGuardAssignStmts(classForName, classNewInstance);
 
-    //		doItAllBody.insertAssignmentStatement(classes,
+    // doItAllBody.insertAssignmentStatement(classes,
     // Jimple.v().newStaticInvokeExpr(forName.makeRef(), args));
-    //		doItAllBody.insertAssignmentStatement(instances, Jimple.v().newVirtualInvokeExpr(classes,
+    // doItAllBody.insertAssignmentStatement(instances,
+    // Jimple.v().newVirtualInvokeExpr(classes,
     // newInstance.makeRef()));
-    //		doItAllBody.storeLibraryPointsToField(instances);
+    // doItAllBody.storeLibraryPointsToField(instances);
   }
 
   /**

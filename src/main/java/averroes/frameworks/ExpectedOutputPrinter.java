@@ -34,14 +34,15 @@ public class ExpectedOutputPrinter {
       // Set some soot parameters
       Options.v().classes().addAll(FrameworksOptions.getClasses());
       Options.v().set_soot_classpath(FrameworksOptions.getSootClassPath());
-      //       Options.v().setPhaseOption("jb.dae", "enabled:false");
-      //       Options.v().set_verbose(true);
+      // Options.v().setPhaseOption("jb.dae", "enabled:false");
+      // Options.v().set_verbose(true);
 
       // Load the necessary classes
       Scene.v().loadNecessaryClasses();
 
       // Print out Jimple files
-      SootSceneUtil.getClasses().stream()
+      SootSceneUtil.getClasses()
+          .stream()
           .map(c -> c.getMethods())
           .flatMap(List::stream)
           .filter(SootMethod::isConcrete)

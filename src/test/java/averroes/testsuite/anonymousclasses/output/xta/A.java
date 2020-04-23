@@ -13,6 +13,7 @@ public class A {
   private Object set_m3;
   private Object key; // set for field key
   private Object value; // set for field value
+
   public A() {
     set_m0 = this; // for any instance method, assign "this" into the defining method's set
   }
@@ -37,9 +38,10 @@ public class A {
           private Object set_m1;
           private Object set_m2;
           private boolean done = false;
-          // weirdly, static fields are not allowed in non-static nested classes (and hence
+          // weirdly, static fields are not allowed in non-static nested classes (and
+          // hence
           // anonymous classes)
-          private /*static*/ Object obj; // set for field obj
+          private /* static */ Object obj; // set for field obj
 
           {
             set_m0 = this;
@@ -81,9 +83,10 @@ public class A {
           private Object set_m1;
           private Object set_m2;
           private boolean done = false;
-          // weirdly, static fields are not allowed in non-static nested classes (and hence
+          // weirdly, static fields are not allowed in non-static nested classes (and
+          // hence
           // anonymous classes)
-          private /*static*/ Object obj; // set for field obj
+          private /* static */ Object obj; // set for field obj
 
           {
             set_m0 = this;

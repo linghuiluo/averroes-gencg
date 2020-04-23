@@ -33,18 +33,18 @@ public class Client {
 
     /* (3) orig: untainted, XTA/RTA/Averroes: tainted */
     /*
-     * Here the returned value is untainted, but the XTA/RTA/Averroes models
-     * are too imprecise to determine that. This case illustrates a
-     * situation where XTA is less precise than the original code.
+     * Here the returned value is untainted, but the XTA/RTA/Averroes models are too
+     * imprecise to determine that. This case illustrates a situation where XTA is
+     * less precise than the original code.
      */
     System.out.println(m.findKeyFor("not_secret"));
 
     /* (4) orig/XTA: untainted, RTA/Averroes: tainted */
     /*
-     * Averroes and RTA use a single location that represents both List and
-     * Map, and hence report that the value printed here is tainted. XTA
-     * uses separate locations for these classes so that it knows that the
-     * printed value is untainted.
+     * Averroes and RTA use a single location that represents both List and Map, and
+     * hence report that the value printed here is tainted. XTA uses separate
+     * locations for these classes so that it knows that the printed value is
+     * untainted.
      */
     System.out.println(list.get(0));
   }

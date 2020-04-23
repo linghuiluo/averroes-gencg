@@ -10,6 +10,7 @@ public class A {
   private Object[] f1; // objects in f1
   private Object[] f2; // objects in f2
   private Object[] f3; // objects in f3
+
   public A() {
     set_m0 = this; // inferred from implicit "this" parameter
 

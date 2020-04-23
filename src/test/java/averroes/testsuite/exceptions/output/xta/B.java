@@ -6,6 +6,7 @@ import java.io.PrintStream;
 public class B extends Exception {
   @SuppressWarnings("unused")
   private Object set_m0;
+
   private Object set_m1;
 
   public B() {

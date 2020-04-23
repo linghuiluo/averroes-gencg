@@ -676,17 +676,17 @@ public class Hierarchy {
         .getMethod(signatureToSubsignature(methodSignature));
   }
 
-  //	/**
-  //	 * Check if the given string is a valid substring of an application class
-  //	 * name.
-  //	 *
-  //	 * @param str
-  //	 * @return list of application classes it matches
-  //	 */
-  //	public Set<SootClass> matchSubstrOfApplicationClass(String str) {
-  //		return nameToApplicationClass.keySet().stream().filter(k -> k.contains(str))
-  //				.map(k -> nameToApplicationClass.get(k)).collect(Collectors.toSet());
-  //	}
+  // /**
+  // * Check if the given string is a valid substring of an application class
+  // * name.
+  // *
+  // * @param str
+  // * @return list of application classes it matches
+  // */
+  // public Set<SootClass> matchSubstrOfApplicationClass(String str) {
+  // return nameToApplicationClass.keySet().stream().filter(k -> k.contains(str))
+  // .map(k -> nameToApplicationClass.get(k)).collect(Collectors.toSet());
+  // }
 
   /**
    * Check if the given class is an application class.

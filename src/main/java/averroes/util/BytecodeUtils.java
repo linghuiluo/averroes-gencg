@@ -9,11 +9,10 @@
  */
 package averroes.util;
 
-import soot.*;
-import soot.coffi.Util;
-
 import java.util.Arrays;
 import java.util.List;
+import soot.*;
+import soot.coffi.Util;
 
 public class BytecodeUtils {
 
@@ -60,16 +59,18 @@ public class BytecodeUtils {
     Type returnType = getReturnType(methodDescriptor);
 
     /*
-     * Get the method ref and resolve it to a Soot method. We need to resolve to the actual method that will be
-     * called at runtime, or might be resolved by a static analysis. Otherwise, we'll just get the interface method.
+     * Get the method ref and resolve it to a Soot method. We need to resolve to the
+     * actual method that will be called at runtime, or might be resolved by a
+     * static analysis. Otherwise, we'll just get the interface method.
      */
     SootMethodRef methodRef =
         Scene.v().makeMethodRef(cls, methodName, parameterTypes, returnType, false);
     SootMethod method;
 
     /*
-     * We have to do this ugly code. Try first and see if the method is not static. If it is static, then create a
-     * new methodRef in the catch and resolve it again with isStatic = true.
+     * We have to do this ugly code. Try first and see if the method is not static.
+     * If it is static, then create a new methodRef in the catch and resolve it
+     * again with isStatic = true.
      */
     try {
       method = methodRef.resolve();
@@ -91,8 +92,9 @@ public class BytecodeUtils {
     SootField field;
 
     /*
-     * We have to do this ugly code. Try first and see if the field is not static. If it is static, then create a
-     * new fieldRef in the catch and resolve it again with isStatic = true.
+     * We have to do this ugly code. Try first and see if the field is not static.
+     * If it is static, then create a new fieldRef in the catch and resolve it again
+     * with isStatic = true.
      */
     try {
       field = fieldRef.resolve();

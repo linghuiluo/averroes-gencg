@@ -3,6 +3,7 @@ package averroes.testsuite.arrays2.output.xta;
 public class A {
   @SuppressWarnings("unused")
   private Object set_m0;
+
   private Object set_m1;
   private Object set_m2;
   private Object set_m3;
@@ -16,6 +17,7 @@ public class A {
   private Object f1; // set for field f1
   private Object[] f2; // set for field f2
   private Object[] f3; // set for field f3
+
   public A() {
     set_m0 = this; // inferred from implicit "this" parameter
   }
@@ -60,7 +62,7 @@ public class A {
 
   public Object m7() {
     set_m7 = this; // inferred from implicit "this" parameter
-    set_m7 = f3; // inferred from field read f3 in  "this.f3[17]"
+    set_m7 = f3; // inferred from field read f3 in "this.f3[17]"
     set_m7 = ((Object[]) set_m7)[0]; // inferred from aaload in "this.f3[17]"
     return set_m7; // inferred from return type
   }

@@ -3,6 +3,7 @@ package averroes.testsuite.casting.output.xta;
 public class A {
   @SuppressWarnings("unused")
   private Object set_m0;
+
   private Object set_m1;
   private Object set_m2;
   private Object set_m3;
@@ -13,6 +14,7 @@ public class A {
   private Object set_m8;
   private Object f1; // objects in f1
   private String f2; // objects in f2
+
   public A() {
     set_m0 = this; // inferred from implicit "this" parameter
   }

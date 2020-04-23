@@ -49,7 +49,7 @@ public class A {
 
   public Object m7() {
     RTA.set = this; // inferred for implicit "this" parameter
-    RTA.set = f3; // inferred from field read f3 in  "this.f3[17]"
+    RTA.set = f3; // inferred from field read f3 in "this.f3[17]"
     RTA.set = ((Object[]) RTA.set)[0]; // inferred for aaread "this.f3[17]"
     return RTA.set; // inferred from return type
   }

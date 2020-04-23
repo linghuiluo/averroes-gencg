@@ -4,6 +4,7 @@ class Client {
 
   private static Object set_m1;
   private static Object set_m2;
+
   @SuppressWarnings("unused")
   private Object set_m0;
 
@@ -31,6 +32,7 @@ class Client {
 class X {
   @SuppressWarnings("unused")
   private Object set_m0;
+
   private Object set_m1;
 
   X() {

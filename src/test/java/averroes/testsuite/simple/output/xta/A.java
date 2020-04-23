@@ -3,6 +3,7 @@ package averroes.testsuite.simple.output.xta;
 public class A {
   @SuppressWarnings("unused")
   private Object set_m0; // objects in m0
+
   private Object set_m1; // objects in m1
   private Object set_m2; // objects in m2
   private Object set_m3; // objects in m3
@@ -11,6 +12,7 @@ public class A {
   private Object f1; // objects in f1
   private Object f2; // objects in f1
   private Object f3; // objects in f1
+
   public A() {
     set_m0 = this; // for any instance method, assign "this" into the defining method's set
   }

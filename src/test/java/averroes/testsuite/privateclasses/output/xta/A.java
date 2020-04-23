@@ -11,6 +11,7 @@ public class A {
   private Object set_m1;
   private Object set_m2;
   private Object set_m3;
+
   public A() {
     set_m0 = this;
   }

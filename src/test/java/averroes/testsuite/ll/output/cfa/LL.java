@@ -348,7 +348,7 @@ public class LL implements Iterable {
   public void clear() {
     // Clearing all of the links between nodes is "unnecessary", but:
     // - helps a generational GC if the discarded nodes inhabit
-    //   more than one generation
+    // more than one generation
     // - is sure to free memory even if there is a reachable Iterator
     for (Node x = first; x != null; ) {
       Node next = x.next;
@@ -806,7 +806,8 @@ public class LL implements Iterable {
    * dump the list into a newly allocated array of {@code String}:
    *
    * <pre>
-   *     String[] y = x.toArray(new String[0]);</pre>
+   * String[] y = x.toArray(new String[0]);
+   * </pre>
    *
    * Note that {@code toArray(new Object[0])} is identical in function to {@code toArray()}.
    *

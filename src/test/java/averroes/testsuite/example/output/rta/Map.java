@@ -53,8 +53,11 @@ class Map {
     // allocs
     if (RTA.guard) RTA.set = new String[1];
 
-    RTA.set = keys; // Inferred from read of field keys in "System.arraycopy(keys, 0, newKeys, 0, size)"
-    RTA.set = values; // Inferred from read of field values in "System.arraycopy(values, 0, newValues, 0, size)"
+    RTA.set = keys; // Inferred from read of field keys in "System.arraycopy(keys, 0, newKeys, 0,
+    // size)"
+    RTA.set =
+        values; // Inferred from read of field values in "System.arraycopy(values, 0, newValues,
+    // 0, size)"
 
     // method calls
     Object obj = RTA.set;

@@ -20,7 +20,8 @@ public class UnnecessaryMethodCallEliminator {
     // List<Unit> toRemove = new ArrayList<Unit>();
 
     List<Unit> toRemove =
-        body.getUnits().stream()
+        body.getUnits()
+            .stream()
             .filter(
                 u ->
                     (u instanceof DefinitionStmt
