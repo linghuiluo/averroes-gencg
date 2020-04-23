@@ -84,14 +84,15 @@ public class JarOrganizer {
   }
 
   /**
-   * Process the input JAR files.
+   * Process the application jars.
    *
    * @throws ZipException
    * @throws IOException
    * @throws URISyntaxException
    */
   private void processInputs() throws ZipException, IOException {
-    AverroesOptions.getApplicationJars().forEach(jar -> processArchive(jar, true));
+    if (!AverroesOptions.isAndroidApk())
+      AverroesOptions.getApplicationJars().forEach(jar -> processArchive(jar, true));
   }
 
   /** Process the dependencies of the input JAR files. */
@@ -137,27 +138,29 @@ public class JarOrganizer {
     }
 
     File file = new File(fileName);
-    LoggerFactory.getLogger(getClass())
-        .info(
-            "Processing "
-                + (fromApplicationArchive ? "input" : "library")
-                + " archive: "
-                + file.getAbsolutePath());
+    if (file.getName().endsWith(".jar")) {
+      LoggerFactory.getLogger(getClass())
+          .info(
+              "Processing "
+                  + (fromApplicationArchive ? "input" : "library")
+                  + " archive: "
+                  + file.getAbsolutePath());
 
-    try {
-      ZipFile archive = new ZipFile(file);
-      Enumeration<? extends ZipEntry> entries = archive.entries();
+      try {
+        ZipFile archive = new ZipFile(file);
+        Enumeration<? extends ZipEntry> entries = archive.entries();
 
-      while (entries.hasMoreElements()) {
-        ZipEntry entry = entries.nextElement();
-        if (entry.getName().endsWith(".class")) {
-          addClass(archive, entry, fromApplicationArchive);
+        while (entries.hasMoreElements()) {
+          ZipEntry entry = entries.nextElement();
+          if (entry.getName().endsWith(".class")) {
+            addClass(archive, entry, fromApplicationArchive);
+          }
         }
+        archive.close();
+      } catch (IOException e) {
+        e.printStackTrace();
+        System.exit(1);
       }
-      archive.close();
-    } catch (IOException e) {
-      e.printStackTrace();
-      System.exit(1);
     }
   }
 

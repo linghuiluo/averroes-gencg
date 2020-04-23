@@ -46,11 +46,16 @@ public class JarFactoryClassProvider implements ClassProvider {
   private Set<String> libraryClassNames;
   private Map<String, Resource> classes;
 
-  /** Construct a new class provider. */
-  public JarFactoryClassProvider() {
+  /**
+   * Construct a new class provider.
+   *
+   * @throws IOException
+   */
+  public JarFactoryClassProvider() throws IOException {
     applicationClassNames = new HashSet<String>();
     libraryClassNames = new HashSet<String>();
     classes = new HashMap<String, Resource>();
+    prepareJarFactoryClasspath();
   }
 
   /**
@@ -85,7 +90,7 @@ public class JarFactoryClassProvider implements ClassProvider {
    *
    * @throws IOException
    */
-  public void prepareJarFactoryClasspath() throws IOException {
+  private void prepareJarFactoryClasspath() throws IOException {
     LoggerFactory.getLogger(getClass()).info("");
     LoggerFactory.getLogger(getClass()).info("Preparing Averroes ...");
     addApplicationArchive();

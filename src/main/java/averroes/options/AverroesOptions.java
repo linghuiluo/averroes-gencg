@@ -55,7 +55,7 @@ public final class AverroesOptions {
           .desc("the main class that runs the application when the program executes")
           .hasArg()
           .argName("class")
-          .required()
+          .required(false)
           .build();
 
   private static Option androidApk =
@@ -393,5 +393,10 @@ public final class AverroesOptions {
   public static String getAndroidApk() {
     assert (!isAndroidApk());
     return cmd.getOptionValue(androidApk.getOpt());
+  }
+
+  public static String getAndroidJar() {
+    // TODO Auto-generated method stub
+    return null;
   }
 }

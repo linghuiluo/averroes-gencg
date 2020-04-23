@@ -14,9 +14,11 @@ import averroes.soot.CodeGenerator;
 import averroes.soot.Hierarchy;
 import averroes.soot.JarFactoryClassProvider;
 import averroes.soot.SootSceneUtil;
+import averroes.soot.android.DexJarFactoryClassProvider;
 import averroes.util.MathUtils;
 import averroes.util.TimeUtils;
 import averroes.util.io.Paths;
+import java.io.File;
 import java.util.Collections;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.LoggerFactory;
@@ -61,24 +63,41 @@ public class Main {
       jarOrganizer.organizeInputJarFiles();
 
       // Print some statistics
-      LoggerFactory.getLogger(averroes.Main.class)
-          .info("# application classes: " + jarOrganizer.applicationClassNames().size());
+      if (!AverroesOptions.isAndroidApk()) {
+        LoggerFactory.getLogger(averroes.Main.class)
+            .info("# application classes: " + jarOrganizer.applicationClassNames().size());
+      }
       LoggerFactory.getLogger(averroes.Main.class)
           .info("# library classes: " + jarOrganizer.libraryClassNames().size());
 
       // Add the organized archives for the application and its
       // dependencies.
       TimeUtils.reset();
-      JarFactoryClassProvider provider = new JarFactoryClassProvider();
-      provider.prepareJarFactoryClasspath();
+      if (!AverroesOptions.isAndroidApk()) {
 
-      // Set some soot parameters
-      SourceLocator.v().setClassProviders(Collections.singletonList(provider));
-      SootSceneUtil.addCommonDynamicClasses(provider);
-      Options.v().classes().addAll(provider.getApplicationClassNames());
-      Options.v().set_main_class(AverroesOptions.getMainClass());
-      Options.v().set_validate(true);
-      Options.v().set_allow_phantom_refs(true);
+        JarFactoryClassProvider provider = new JarFactoryClassProvider();
+        // Set some soot parameters
+        SourceLocator.v().setClassProviders(Collections.singletonList(provider));
+        SootSceneUtil.addCommonDynamicClasses(provider);
+        Options.v().classes().addAll(provider.getApplicationClassNames());
+        Options.v().set_main_class(AverroesOptions.getMainClass());
+        Options.v().set_validate(true);
+        Options.v().set_allow_phantom_refs(true);
+      } else {
+        DexJarFactoryClassProvider provider = new DexJarFactoryClassProvider();
+        SourceLocator.v().setClassProviders(Collections.singletonList(provider));
+        SootSceneUtil.addCommonDynamicClasses(provider);
+        Options.v().classes().addAll(provider.getApplicationClassNames());
+        Options.v().set_src_prec(Options.src_prec_apk);
+        Options.v().set_process_multiple_dex(true);
+        Options.v().set_validate(true);
+        Options.v().set_allow_phantom_refs(true);
+        String cp = AverroesOptions.getAndroidApk();
+        cp += File.pathSeparator + Paths.organizedLibraryJarFile().toPath().toAbsolutePath();
+        Options.v().set_soot_classpath(cp);
+      }
+      LoggerFactory.getLogger(averroes.Main.class)
+          .info("soot class path: " + Options.v().soot_classpath());
 
       // Load the necessary classes
       LoggerFactory.getLogger(averroes.Main.class).info("");

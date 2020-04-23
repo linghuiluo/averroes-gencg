@@ -270,12 +270,13 @@ public class CodeGenerator {
    */
   public void createLibraryMethodBodies() throws IOException {
     for (SootClass libraryClass : getLibraryClasses()) {
-      for (SootMethod method : libraryClass.getMethods()) {
-        // Create our Jimple body for concrete methods only
-        if (method.isConcrete()) {
-          createJimpleBody(method);
+      if (libraryClass.isConcrete())
+        for (SootMethod method : libraryClass.getMethods()) {
+          // Create our Jimple body for concrete methods only
+          if (method.isConcrete()) {
+            createJimpleBody(method);
+          }
         }
-      }
 
       writeLibraryClassFile(libraryClass);
     }

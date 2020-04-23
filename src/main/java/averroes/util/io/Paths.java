@@ -157,6 +157,15 @@ public class Paths {
   }
 
   /**
+   * The path to the android apk file.
+   *
+   * @return
+   */
+  public static File androidApkFile() {
+    return new File(AverroesOptions.getAndroidApk());
+  }
+
+  /**
    * The path to the organized library JAR file.
    *
    * @return
