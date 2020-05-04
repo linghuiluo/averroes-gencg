@@ -542,8 +542,9 @@ public class Hierarchy {
    * @return
    */
   public SootMethod getDirectSuperclassDefaultConstructor(SootMethod method) {
-    return getDirectSuperclassOf(method.getDeclaringClass())
-        .getMethod(Names.DEFAULT_CONSTRUCTOR_SUBSIG);
+    SootClass superClass = getDirectSuperclassOf(method.getDeclaringClass());
+    if (superClass != null) return superClass.getMethod(Names.DEFAULT_CONSTRUCTOR_SUBSIG);
+    else return null;
   }
 
   /**
@@ -910,7 +911,7 @@ public class Hierarchy {
     checkLevel(cls);
 
     if (!classToDirectSuperclass.containsKey(cls)) {
-      classToDirectSuperclass.put(cls, cls.getSuperclass());
+      if (cls.hasSuperclass()) classToDirectSuperclass.put(cls, cls.getSuperclass());
     }
 
     return classToDirectSuperclass.get(cls);
@@ -1571,18 +1572,18 @@ public class Hierarchy {
     for (SootClass cls : classes) {
       // Get the class names
       nameToClass.put(cls.getName(), cls);
-      if (AverroesOptions.isApplicationClass(cls)) {
+      if (AverroesOptions.isLoadedApplicationClass(cls)) {
+        cls.setApplicationClass();
         nameToApplicationClass.put(cls.getName(), cls);
         applicationMethodCount += cls.getMethodCount();
         applicationFieldCount += cls.getFieldCount();
       } else {
+        cls.setLibraryClass();
         nameToLibraryClass.put(cls.getName(), cls);
         libraryMethodCount += cls.getMethodCount();
         libraryFieldCount += cls.getFieldCount();
-
         // Get the return array types of library methods
         libraryArrayTypeReturns.addAll(getArrayTypeReturns(cls));
-
         // Get the abstract library classes, interfaces, and concrete
         // library classes
         if (isAbstractClass(cls)) {
@@ -1594,7 +1595,6 @@ public class Hierarchy {
         }
       }
     }
-
     cleanupLibraryArrayTypeReturns();
   }
 
@@ -1712,7 +1712,6 @@ public class Hierarchy {
    */
   private void findLibraryEntitiesReferencedInApplication() {
     applicationConstantPool = new AverroesApplicationConstantPool(this);
-
     findApplicationClassesReferencedByName();
     findLibraryMethodsReferencedInApplication();
     findLibraryFieldsReferencedInApplication();

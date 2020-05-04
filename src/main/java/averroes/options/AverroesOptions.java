@@ -16,7 +16,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -38,6 +40,7 @@ import soot.SootClass;
 public final class AverroesOptions {
 
   private static List<String> dynamicClasses = null;
+  private static Set<String> applicationClasses = new HashSet<>();
 
   private static Option applicationRegex =
       Option.builder("r")
@@ -46,7 +49,7 @@ public final class AverroesOptions {
               "a list of regular expressions for application packages or classes separated by File.pathSeparator")
           .hasArg()
           .argName("regex")
-          .required()
+          .required(false)
           .build();
 
   private static Option mainClass =
@@ -353,17 +356,26 @@ public final class AverroesOptions {
    * @return
    */
   public static boolean isApplicationClass(String className) {
-    return isApplicationClass(ObjectManager.v().getClass(className));
+    if (AverroesOptions.useApplicationRegex())
+      return isApplicationClass(ObjectManager.v().getClass(className));
+    else return true;
   }
 
+  public static void loadApplicationClass(String className) {
+    applicationClasses.add(className);
+  }
+
+  public static boolean isLoadedApplicationClass(String className) {
+    return applicationClasses.contains(className);
+  }
   /**
    * Check if a class belongs to the application, based on the {@link #applicationRegex} option.
    *
    * @param sootClass
    * @return
    */
-  public static boolean isApplicationClass(SootClass sootClass) {
-    return isApplicationClass(sootClass.getName());
+  public static boolean isLoadedApplicationClass(SootClass sootClass) {
+    return isLoadedApplicationClass(sootClass.getName());
   }
 
   /**
@@ -390,13 +402,12 @@ public final class AverroesOptions {
     return cmd.hasOption(androidApk.getOpt());
   }
 
+  public static boolean useApplicationRegex() {
+    return cmd.hasOption(applicationJars.getOpt());
+  }
+
   public static String getAndroidApk() {
     assert (!isAndroidApk());
     return cmd.getOptionValue(androidApk.getOpt());
-  }
-
-  public static String getAndroidJar() {
-    // TODO Auto-generated method stub
-    return null;
   }
 }

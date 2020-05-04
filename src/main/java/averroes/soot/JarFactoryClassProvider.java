@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import soot.ClassProvider;
 import soot.ClassSource;
@@ -45,6 +46,7 @@ public class JarFactoryClassProvider implements ClassProvider {
   private Set<String> applicationClassNames;
   private Set<String> libraryClassNames;
   private Map<String, Resource> classes;
+  private Logger logger = LoggerFactory.getLogger(JarFactoryClassProvider.class);
 
   /**
    * Construct a new class provider.
@@ -91,8 +93,8 @@ public class JarFactoryClassProvider implements ClassProvider {
    * @throws IOException
    */
   private void prepareJarFactoryClasspath() throws IOException {
-    LoggerFactory.getLogger(getClass()).info("");
-    LoggerFactory.getLogger(getClass()).info("Preparing Averroes ...");
+    logger.info("");
+    logger.info("Preparing Averroes ...");
     addApplicationArchive();
     addLibraryArchive();
   }
@@ -162,14 +164,12 @@ public class JarFactoryClassProvider implements ClassProvider {
    * @throws IOException
    */
   public List<String> addArchive(File file, boolean isApplication) throws IOException {
-    LoggerFactory.getLogger(getClass())
-        .info(
-            "Adding "
-                + (isApplication ? "application" : "library")
-                + " archive: "
-                + file.getAbsolutePath());
+    logger.info(
+        "Adding "
+            + (isApplication ? "application" : "library")
+            + " archive: "
+            + file.getAbsolutePath());
     List<String> result = new ArrayList<String>();
-
     ZipFile archive = new ZipFile(file);
     Enumeration<? extends ZipEntry> entries = archive.entries();
     while (entries.hasMoreElements()) {
@@ -179,7 +179,11 @@ public class JarFactoryClassProvider implements ClassProvider {
         result.add(className);
       }
     }
-
+    logger.info(
+        "Added "
+            + (isApplication ? "application" : "library")
+            + " archive: #classes "
+            + result.size());
     return result;
   }
 

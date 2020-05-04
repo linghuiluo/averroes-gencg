@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.slf4j.LoggerFactory;
 import soot.ArrayType;
 import soot.FloatType;
 import soot.IntegerType;
@@ -135,8 +136,18 @@ public class AverroesJimpleBody {
       // Call the default constructor of the direct superclass, except for
       // the constructor of java.lang.Object
       if (!Hierarchy.v().isDeclaredInJavaLangObject(body.getMethod())) {
-        insertSpecialInvokeStatement(
-            base, Hierarchy.v().getDirectSuperclassDefaultConstructor(body.getMethod()));
+        SootMethod constructor =
+            Hierarchy.v().getDirectSuperclassDefaultConstructor(body.getMethod());
+        if (constructor != null) {
+          insertSpecialInvokeStatement(base, constructor);
+        } else {
+          LoggerFactory.getLogger(getClass())
+              .warn(
+                  "Can not find default constructor of the direct superclass for "
+                      + body.getMethod().getSignature());
+          // FIXME. super class can't be found
+          insertSpecialInvokeStatement(base, body.getMethod());
+        }
       }
     }
 
