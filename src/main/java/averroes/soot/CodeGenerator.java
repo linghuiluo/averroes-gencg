@@ -535,7 +535,7 @@ public class CodeGenerator {
 
     // Call all the application methods that the library could call
     // reflectively
-    callApplicationMethodsReflectively();
+    callApplicationMethods();
 
     // Handle array indices: cast lpt to object[] then assign it lpt
     handleArrayIndices();
@@ -572,8 +572,10 @@ public class CodeGenerator {
     doItAllBody.insertVirtualInvokeStatement(fpt, finalize);
   }
 
-  /** Call the application methods that the library could call reflectively. */
-  private void callApplicationMethodsReflectively() {
+  /**
+   * Call the application methods that the library could call, i.e. callbacks, calls via reflection.
+   */
+  private void callApplicationMethods() {
     for (SootMethod toCall : getAllMethodsToCallReflectively()) {
       SootClass cls = toCall.getDeclaringClass();
       // SootClass cls = Cleanup.v().getClass(toCall.getSignature());

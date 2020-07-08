@@ -10,6 +10,7 @@ java {
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 
+
 group 'de.upb.swt'
 version '1.0-SNAPSHOT'
 
@@ -33,4 +34,13 @@ dependencies {
 	//testImplementation 'de.tud.sse:soot-infoflow:2.7.1.1:tests'
 }
 
+jar {
+    manifest {
+        attributes 'Main-Class': 'averroes.Main'
+    }
+    
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
 
