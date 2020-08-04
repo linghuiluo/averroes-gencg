@@ -21,7 +21,6 @@ import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-import java.util.stream.Collectors;
 import org.apache.bcel.Repository;
 import org.apache.bcel.classfile.ClassFormatException;
 import org.apache.bcel.classfile.ClassParser;
@@ -170,35 +169,36 @@ public class JarFile {
   }
 
   /**
-   * Add the generated AverroesLibraryClass file to the Jar file.
+   * Add the generated LibraryClass and DummyMainClass file to the averroes-lib-class.jar file
    *
    * @throws IOException
    * @throws URISyntaxException
    */
-  public void addAverroesLibraryClassFile() throws IOException, URISyntaxException {
+  public void addAverroesLibraryClassAndDummyMainClassFile()
+      throws IOException, URISyntaxException {
     File dir = Paths.libraryClassesOutputDirectory();
     File placeholderJar = Paths.placeholderLibraryJarFile();
     File averroesLibraryClassJar = Paths.averroesLibraryClassJarFile();
 
-    File file =
-        FileUtils.listFiles(dir, new String[] {"class"}, true)
-            .stream()
-            .filter(f -> relativize(dir, f).equals(Names.AVERROES_LIBRARY_CLASS_BC_SIG + ".class"))
-            .collect(Collectors.toList())
-            .get(0);
-    String className = relativize(dir, file);
+    Set<String> classFiles = new HashSet<>();
+    FileUtils.listFiles(dir, new String[] {"class"}, true)
+        .stream()
+        .forEach(
+            f -> {
+              try {
+                String s = relativize(dir, f);
+                if (s.equals(Names.AVERROES_LIBRARY_CLASS_BC_SIG + ".class")
+                    || s.equals(Names.DUMMYMAIN_CLASS_BC_SIG + ".class")) {
+                  if (f.isFile()) {
+                    add(dir, f);
+                    classFiles.add(s);
+                  }
+                }
+              } catch (IOException e) {
+                e.printStackTrace();
+              }
+            });
 
-    // Add the class file to the separately crafted JAR file.
-    if (file.isFile()) {
-      add(dir, file);
-    } else {
-      throw new IllegalStateException(
-          "cannot find "
-              + Names.AVERROES_LIBRARY_CLASS
-              + System.getProperty("line.separator")
-              + "Invalid path given: "
-              + fileName);
-    }
     close();
 
     // Set BCEL's repository class path.
@@ -214,10 +214,14 @@ public class JarFile {
 
     // Now add the class files (including ones from placeholder JAR) to the
     // BCEL repository.
-    ClassParser parser =
-        new ClassParser(averroesLibraryClassJar.getPath(), className.replace("\\", "/"));
-    JavaClass cls = parser.parse();
-    bcelClasses.add(cls);
+    // Now add all those class files in the crafted JAR file to the BCEL
+    // repository.
+    for (String classFile : classFiles) {
+      ClassParser parser =
+          new ClassParser(averroesLibraryClassJar.getPath(), classFile.replace("\\", "/"));
+      JavaClass cls = parser.parse();
+      bcelClasses.add(cls);
+    }
 
     // Now we need to add all the BCEL classes (including ones from previous
     // placeholder JAR to force BCEL to load

@@ -18,8 +18,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -28,10 +31,18 @@ import java.util.Map;
 import java.util.Set;
 import soot.ArrayType;
 import soot.BooleanType;
+import soot.ByteType;
+import soot.CharType;
+import soot.DoubleType;
+import soot.FloatType;
+import soot.IntType;
 import soot.Local;
+import soot.LongType;
 import soot.Modifier;
 import soot.RefLikeType;
 import soot.RefType;
+import soot.Scene;
+import soot.ShortType;
 import soot.SootClass;
 import soot.SootField;
 import soot.SootMethod;
@@ -40,11 +51,18 @@ import soot.SourceLocator;
 import soot.Type;
 import soot.Value;
 import soot.VoidType;
+import soot.dava.internal.javaRep.DIntConstant;
+import soot.javaToJimple.LocalGenerator;
 import soot.jimple.AssignStmt;
+import soot.jimple.DoubleConstant;
+import soot.jimple.FloatConstant;
 import soot.jimple.IntConstant;
 import soot.jimple.InvokeExpr;
 import soot.jimple.Jimple;
 import soot.jimple.JimpleBody;
+import soot.jimple.LongConstant;
+import soot.jimple.NullConstant;
+import soot.jimple.StringConstant;
 import soot.jimple.toolkits.scalar.NopEliminator;
 import soot.options.Options;
 import soot.util.JasminOutputStream;
@@ -65,6 +83,7 @@ public class CodeGenerator {
   private int generatedMethodCount;
   private int generatedClassCount;
 
+  private SootClass dummyMainClass = null;
   private SootClass averroesLibraryClass = null;
   private SootClass averroesAbstractLibraryClass = null;
   private AverroesJimpleBody doItAllBody = null;
@@ -261,6 +280,131 @@ public class CodeGenerator {
       // Write the class file to disk
       writeLibraryClassFile(averroesLibraryClass);
     }
+  }
+
+  /**
+   * Create a dummy main class for Android apk. Instances for all entry point classes are created in
+   * the main method.
+   *
+   * @param entryPointClasses
+   * @throws IOException
+   */
+  public void createDummyMainClass(List<SootClass> entryPointClasses) throws IOException {
+    dummyMainClass = new SootClass(Names.DUMMYMAIN_CLASS, Modifier.PUBLIC);
+    dummyMainClass.setSuperclass(Hierarchy.v().getJavaLangObject());
+    Type type = ArrayType.v(RefType.v("java.lang.String"), 1);
+    SootMethod mainMethod =
+        new SootMethod(
+            "main",
+            Arrays.asList(new Type[] {type}),
+            VoidType.v(),
+            Modifier.PUBLIC | Modifier.STATIC);
+    dummyMainClass.addMethod(mainMethod);
+    JimpleBody body = Jimple.v().newBody(mainMethod);
+    LocalGenerator localGenerator = new LocalGenerator(body);
+    body.getUnits()
+        .add(
+            Jimple.v()
+                .newIdentityStmt(
+                    localGenerator.generateLocal(type), Jimple.v().newParameterRef(type, 0)));
+
+    HashMap<SootClass, Local> localForClasses = new HashMap<>();
+
+    for (SootClass klass : entryPointClasses) {
+      Local local = localGenerator.generateLocal(klass.getType());
+      localForClasses.put(klass, local);
+    }
+
+    // make sure outer class comes first in the list.
+    Collections.sort(
+        entryPointClasses,
+        new Comparator<SootClass>() {
+          @Override
+          public int compare(SootClass o1, SootClass o2) {
+            if (o1.getName().startsWith(o2.getName())) return 1;
+            else return -1;
+          }
+        });
+
+    for (SootClass klass : entryPointClasses) {
+      boolean isInnerClass = klass.getName().contains("$");
+      SootClass outerClass =
+          isInnerClass
+              ? Scene.v()
+                  .getSootClassUnsafe(
+                      klass.getName().substring(0, klass.getName().lastIndexOf("$")))
+              : null;
+      body.getUnits()
+          .add(
+              Jimple.v()
+                  .newAssignStmt(
+                      localForClasses.get(klass), Jimple.v().newNewExpr(klass.getType())));
+
+      SootMethodRef constructorRef =
+          Scene.v()
+              .makeConstructorRef(
+                  klass, klass.getMethodByName(SootMethod.constructorName).getParameterTypes());
+      List<Value> args = new ArrayList<>();
+
+      for (Type p : constructorRef.getParameterTypes()) {
+        boolean added = false;
+        if (isInnerClass) {
+          if (outerClass != null && outerClass.getType().equals(p)) {
+            args.add(localForClasses.get(outerClass));
+            added = true;
+          }
+        }
+        if (!added)
+          if (isSimpleType(p.toString())) args.add(getSimpleDefaultValue(p));
+          else {
+
+            args.add(NullConstant.v());
+          }
+      }
+      body.getUnits()
+          .add(
+              Jimple.v()
+                  .newInvokeStmt(
+                      Jimple.v()
+                          .newSpecialInvokeExpr(localForClasses.get(klass), constructorRef, args)));
+    }
+    // Add return statement
+    body.getUnits().addLast(Jimple.v().newReturnVoidStmt());
+    // Finally validate the Jimple body
+    body.validate();
+    mainMethod.setActiveBody(body);
+    writeLibraryClassFile(dummyMainClass);
+  }
+
+  protected boolean isSimpleType(String t) {
+    if (t.equals("java.lang.String")
+        || t.equals("void")
+        || t.equals("char")
+        || t.equals("byte")
+        || t.equals("short")
+        || t.equals("int")
+        || t.equals("float")
+        || t.equals("long")
+        || t.equals("double")
+        || t.equals("boolean")) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  protected Value getSimpleDefaultValue(Type t) {
+    if (t == RefType.v("java.lang.String")) return StringConstant.v("");
+    if (t instanceof CharType) return IntConstant.v(0);
+    if (t instanceof ByteType) return IntConstant.v(0);
+    if (t instanceof ShortType) return IntConstant.v(0);
+    if (t instanceof IntType) return IntConstant.v(0);
+    if (t instanceof FloatType) return FloatConstant.v(0);
+    if (t instanceof LongType) return LongConstant.v(0);
+    if (t instanceof DoubleType) return DoubleConstant.v(0);
+    if (t instanceof BooleanType) return DIntConstant.v(0, BooleanType.v());
+    // also for arrays etc.
+    return NullConstant.v();
   }
 
   /**
