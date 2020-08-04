@@ -36,11 +36,23 @@ public class AndroidEntryPointClassesDetector {
   public static final String APPCOMPATACTIVITYCLASS_V7 = "android.support.v7.app.AppCompatActivity";
 
   public static final String[] ANDROID_ENTRYPOINT_CLASSES = {
-    ACTIVITY_CLASS, SERVICE_CLASS, BROADCASTRECEIVER_CLASS, CONTENTPROVIDER_CLASS
+    ACTIVITY_CLASS,
+    SERVICE_CLASS,
+    BROADCASTRECEIVER_CLASS,
+    CONTENTPROVIDER_CLASS,
+    GCMBASE_INTENT_SERVICE_CLASS,
+    GCMLISTENER_SERVICE_CLASS,
+    APPLICATION_CLASS,
+    FRAGMENT_CLASS,
+    SUPPORTFRAGMENT_CLASS,
+    SERVICECONNECTIONINTERFACE,
+    APPCOMPATACTIVITYCLASS_V4,
+    APPCOMPATACTIVITYCLASS_V7
   };
+
   protected Hierarchy classHierarchy;
 
-  protected String packageName;
+  protected String packageName; // package name stored in AndroidManifest.xml
 
   public AndroidEntryPointClassesDetector(Hierarchy hierachy) {
     this.classHierarchy = hierachy;
@@ -51,13 +63,15 @@ public class AndroidEntryPointClassesDetector {
     List<SootClass> ret = new ArrayList<>();
     for (String androidClass : ANDROID_ENTRYPOINT_CLASSES) {
       SootClass epClass = classHierarchy.getClass(androidClass);
-      LinkedHashSet<SootClass> entryPointClasses = classHierarchy.getSubclassesOf(epClass);
-      for (SootClass c : entryPointClasses)
-        if (c.getPackageName().startsWith(packageName)) {
-          ret.add(c);
-          logger.info(
-              "Detected Android entry point for class " + androidClass + ": " + c.getName());
-        }
+      if (epClass != null) {
+        LinkedHashSet<SootClass> entryPointClasses = classHierarchy.getSubclassesOf(epClass);
+        for (SootClass c : entryPointClasses)
+          if (c.getPackageName().startsWith(packageName)) {
+            ret.add(c);
+            logger.info(
+                "Detected Android entry point for class " + androidClass + ": " + c.getName());
+          }
+      }
     }
     return ret;
   }
