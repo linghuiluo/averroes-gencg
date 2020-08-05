@@ -102,13 +102,15 @@ public class JarFile {
     // Add the class files to the crafted JAR file.
     FileUtils.listFiles(dir, new String[] {"class"}, true)
         .stream()
-        .filter(f -> !relativize(dir, f).equals(Names.AVERROES_LIBRARY_CLASS_BC_SIG + ".class"))
         .forEach(
             file -> {
               try {
                 String className = relativize(dir, file);
-                add(dir, file);
-                classFiles.add(className.replace("\\", "/"));
+                if (!className.equals(Names.AVERROES_LIBRARY_CLASS_BC_SIG + ".class")
+                    && !className.equals(Names.DUMMYMAIN_CLASS_BC_SIG + ".class")) {
+                  add(dir, file);
+                  classFiles.add(className.replace("\\", "/"));
+                }
               } catch (IOException e) {
                 e.printStackTrace();
               }
@@ -137,8 +139,6 @@ public class JarFile {
     // Add the class files to the crafted JAR file.
     FileUtils.listFiles(dir, new String[] {"class"}, true)
         .stream()
-        // .filter(f -> !relativize(dir, f).equals(Names.AVERROES_LIBRARY_CLASS_BC_SIG +
-        // ".class"))
         .forEach(
             file -> {
               try {
