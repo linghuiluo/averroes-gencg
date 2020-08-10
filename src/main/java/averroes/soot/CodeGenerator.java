@@ -484,7 +484,8 @@ public class CodeGenerator {
    * @return
    */
   private String generateCraftedClassName(SootClass cls) {
-    return cls.getName().concat("__Averroes");
+	return cls.getName();
+    //return cls.getName().concat("__Averroes");
   }
 
   /** Initialize the code generator by creating the concrete implementation classes. */
