@@ -18,6 +18,7 @@ import pxb.android.axml.AxmlVisitor;
 import pxb.android.axml.NodeVisitor;
 import soot.SootClass;
 
+/** @author Linghui Luo */
 public class AndroidEntryPointClassesDetector {
   private static Logger logger = LoggerFactory.getLogger(AndroidEntryPointClassesDetector.class);
   public static final String ACTIVITY_CLASS = "android.app.Activity";

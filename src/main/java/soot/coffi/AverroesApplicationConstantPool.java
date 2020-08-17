@@ -1,16 +1,25 @@
 package soot.coffi;
 
+import averroes.options.AverroesOptions;
 import averroes.soot.Hierarchy;
 import averroes.util.BytecodeUtils;
+import averroes.util.DexUtils;
+import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import org.jf.dexlib2.dexbacked.raw.FieldIdItem;
+import org.jf.dexlib2.dexbacked.raw.MethodIdItem;
+import org.jf.dexlib2.dexbacked.raw.RawDexFile;
+import soot.ClassSource;
 import soot.ResolutionFailedException;
 import soot.Scene;
 import soot.SootClass;
 import soot.SootField;
 import soot.SootFieldRef;
 import soot.SootMethod;
+import soot.SourceLocator;
 import soot.Type;
 
 /**
@@ -281,15 +290,62 @@ public class AverroesApplicationConstantPool {
 
     // If we're processing an android apk, process the global method
     // constant pool
-    // if (Options.v().src_prec() == Options.src_prec_apk) {
-    // libraryMethods.addAll(findLibraryMethodsInAndroidApplicationConstantPool());
-    // } else {
-    // Add the library methods that appear in the constant pool of
-    // application classes
-    for (SootClass applicationClass : hierarchy.getApplicationClasses()) {
-      libraryMethods.addAll(findLibraryMethodsInConstantPool(applicationClass));
+    if (AverroesOptions.isAndroidApk()) {
+      libraryMethods.addAll(findLibraryMethodsInAndroidApplicationConstantPool());
+    } else {
+      // Add the library methods that appear in the constant pool of
+      // application classes
+      for (SootClass applicationClass : hierarchy.getApplicationClasses()) {
+        libraryMethods.addAll(findLibraryMethodsInConstantPool(applicationClass));
+      }
     }
-    // }
+  }
+
+  private Set<SootMethod> findLibraryMethodsInAndroidApplicationConstantPool() {
+    Set<SootMethod> result = new HashSet<SootMethod>();
+    try {
+      RawDexFile rawDex = DexUtils.getRawDex(new File(AverroesOptions.getAndroidApk()), null);
+      String[] methods = MethodIdItem.getMethods(rawDex);
+      for (String s : methods) {
+        String[] parts = s.split("->");
+        String className = "";
+        if (!parts[0].startsWith("L") && !parts[0].startsWith("[L")) {
+          // primitive types:
+          // [I->clone()Ljava/lang/Object; Integer
+          // [J->clone()Ljava/lang/Object; Long
+          className = "Ljava.lang.Object;";
+        } else className = parts[0];
+
+        className = className.replace('/', '.');
+        // Remove "L" and ";"
+        if (className.startsWith("["))
+          // eg: [Landroidx/annotation/RestrictTo$Scope;->clone()Ljava/lang/Object;
+          className = className.substring(2, className.length() - 1);
+        else
+          // eg:
+          // Lorg/xmlpull/v1/XmlSerializer;->startDocument(Ljava/lang/String;Ljava/lang/Boolean;)V
+          className = className.substring(1, className.length() - 1);
+        if (!AverroesOptions.isLoadedApplicationClass(className)) {
+          int idx = parts[1].indexOf('(');
+          String methodName = parts[1].substring(0, idx);
+          String methodDescriptor = parts[1].substring(idx);
+          List<Type> parameterTypes = BytecodeUtils.getParameterTypes(methodDescriptor);
+          Type returnType = BytecodeUtils.getReturnType(methodDescriptor);
+          SootClass klass = Scene.v().getSootClass(className);
+          SootMethod method = searchMethod(klass, methodName, parameterTypes, returnType);
+          if (method == null && klass.getMethods().isEmpty()) {
+            ClassSource cc = SourceLocator.v().getClassSource(className);
+            cc.resolve(klass);
+            method = searchMethod(klass, methodName, parameterTypes, returnType);
+          }
+          if (method != null) result.add(method);
+          else System.out.println("ooo" + s);
+        }
+      }
+    } catch (IOException e1) {
+      e1.printStackTrace();
+    }
+    return result;
   }
 
   /**
@@ -367,17 +423,101 @@ public class AverroesApplicationConstantPool {
    */
   private void findLibraryFieldsInApplicationConstantPool() {
     libraryFields = new HashSet<SootField>();
-
     // If we're processing an android apk, process the global field constant
     // pool
-    // if (Options.v().src_prec() == Options.src_prec_apk) {
-    // libraryFields.addAll(findLibraryFieldsInAndroidApplicationConstantPool());
-    // } else {
-    // Add the library methods that appear in the constant pool of
-    // application classes
-    for (SootClass applicationClass : hierarchy.getApplicationClasses()) {
-      libraryFields.addAll(findLibraryFieldsInConstantPool(applicationClass));
+    if (AverroesOptions.isAndroidApk()) {
+      libraryFields.addAll(findLibraryFieldsInAndroidApplicationConstantPool());
+    } else {
+      // Add the library methods that appear in the constant pool of
+      // application classes
+      for (SootClass applicationClass : hierarchy.getApplicationClasses()) {
+        libraryFields.addAll(findLibraryFieldsInConstantPool(applicationClass));
+      }
     }
-    // }
+  }
+
+  private Set<SootField> findLibraryFieldsInAndroidApplicationConstantPool() {
+    Set<SootField> result = new HashSet<SootField>();
+    try {
+      RawDexFile rawDex = DexUtils.getRawDex(new File(AverroesOptions.getAndroidApk()), null);
+      String[] fields = FieldIdItem.getFields(rawDex);
+      for (String s : fields) {
+        String[] parts = s.split("(->|:)");
+        String className = parts[0];
+        className = className.replace('/', '.');
+        // Remove "L" and ";"
+        className = className.substring(1, className.length() - 1);
+        String fieldName = parts[1];
+        String fieldDescriptor = parts[2];
+        Type fieldType = Util.v().jimpleTypeOfFieldDescriptor(fieldDescriptor);
+        SootClass klass = Scene.v().getSootClass(className);
+        SootField field = searchField(klass, fieldName, fieldType);
+        if (field == null && klass.getFields().isEmpty()) {
+          ClassSource cc = SourceLocator.v().getClassSource(className);
+          cc.resolve(klass);
+          field = searchField(klass, fieldName, fieldType);
+        }
+        // If the resolved field is in the library, add it to the
+        // result
+        if (hierarchy.isLibraryField(field)) {
+          result.add(field);
+        }
+      }
+    } catch (IOException e1) {
+      e1.printStackTrace();
+    }
+    return result;
+  }
+
+  /**
+   * This method searches a field in a class and its parent classes.
+   *
+   * @param klass
+   * @param fieldName
+   * @param fieldType
+   * @return
+   */
+  private SootField searchField(SootClass klass, String fieldName, Type fieldType) {
+    SootField field = klass.getFieldUnsafe(fieldName, fieldType);
+    if (field != null) return field;
+    if (klass.hasSuperclass()) field = searchField(klass.getSuperclass(), fieldName, fieldType);
+    if (field != null) return field;
+    for (SootClass i : klass.getInterfaces()) {
+      field = searchField(i, fieldName, fieldType);
+      if (field != null) return field;
+    }
+    if (klass.hasOuterClass()) field = searchField(klass.getOuterClass(), fieldName, fieldType);
+    return field;
+  }
+
+  /**
+   * This method searches a method in a class and its parent classes.
+   *
+   * @param klass
+   * @param methodName
+   * @param parameterTypes
+   * @param returnType
+   * @return
+   */
+  private SootMethod searchMethod(
+      SootClass klass, String methodName, List<Type> parameterTypes, Type returnType) {
+    SootMethod method = klass.getMethodUnsafe(methodName, parameterTypes, returnType);
+    if (method != null) return method;
+    if (klass.hasSuperclass()) {
+      SootClass superClass = klass.getSuperclass();
+      if (superClass.getMethods().isEmpty()) {
+        ClassSource cc = SourceLocator.v().getClassSource(superClass.getName());
+        cc.resolve(superClass);
+      }
+      method = searchMethod(superClass, methodName, parameterTypes, returnType);
+    }
+    if (method != null) return method;
+    for (SootClass i : klass.getInterfaces()) {
+      method = searchMethod(i, methodName, parameterTypes, returnType);
+      if (method != null) return method;
+    }
+    if (klass.hasOuterClass())
+      method = searchMethod(klass.getOuterClass(), methodName, parameterTypes, returnType);
+    return method;
   }
 }

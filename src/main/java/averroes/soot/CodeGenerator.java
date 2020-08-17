@@ -414,17 +414,14 @@ public class CodeGenerator {
    */
   public void createLibraryMethodBodies() throws IOException {
     for (SootClass libraryClass : getLibraryClasses()) {
-      if (libraryClass.isConcrete()) {
-        for (SootMethod method : libraryClass.getMethods()) {
-          // Create our Jimple body for concrete methods only
-          if (method.isConcrete()) {
-            createJimpleBody(method);
-            method.setPhantom(false);
-          }
-          if (!method.hasActiveBody()) method.setPhantom(true);
+      for (SootMethod method : libraryClass.getMethods()) {
+        // Create our Jimple body for concrete methods only
+        if (method.isConcrete()) {
+          createJimpleBody(method);
+          method.setPhantom(false);
         }
-        writeLibraryClassFile(libraryClass);
       }
+      writeLibraryClassFile(libraryClass);
     }
   }
 
@@ -484,8 +481,8 @@ public class CodeGenerator {
    * @return
    */
   private String generateCraftedClassName(SootClass cls) {
-	return cls.getName();
-    //return cls.getName().concat("__Averroes");
+    // return cls.getName();
+    return cls.getName().concat("__Averroes");
   }
 
   /** Initialize the code generator by creating the concrete implementation classes. */

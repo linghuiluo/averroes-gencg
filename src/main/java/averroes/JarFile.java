@@ -107,7 +107,9 @@ public class JarFile {
               try {
                 String className = relativize(dir, file);
                 if (!className.equals(Names.AVERROES_LIBRARY_CLASS_BC_SIG + ".class")
-                    && !className.equals(Names.DUMMYMAIN_CLASS_BC_SIG + ".class")&&!className.startsWith("java\\")&&!className.startsWith("javax\\")) {
+                    && !className.equals(Names.DUMMYMAIN_CLASS_BC_SIG + ".class")
+                    && !className.startsWith("java\\")
+                    && !className.startsWith("javax\\")) {
                   add(dir, file);
                   classFiles.add(className.replace("\\", "/"));
                 }

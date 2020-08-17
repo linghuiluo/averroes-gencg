@@ -53,7 +53,7 @@ public class Main {
 
       AverroesOptions.processArguments(args);
 
-      OrganizeInput();
+      organizeInput();
 
       TimeUtils.reset();
 
@@ -161,7 +161,7 @@ public class Main {
     logger.info("# final library fields: " + Hierarchy.v().getLibraryFieldCount());
   }
 
-  private static void OrganizeInput() throws IOException, FileNotFoundException, ZipException {
+  private static void organizeInput() throws IOException, FileNotFoundException, ZipException {
     // Create the output directory and clean up any class files in there
     FileUtils.forceMkdir(Paths.libraryClassesOutputDirectory());
     FileUtils.cleanDirectory(Paths.classesOutputDirectory());
@@ -188,10 +188,13 @@ public class Main {
     if (!AverroesOptions.isAndroidApk()) Options.v().set_main_class(AverroesOptions.getMainClass());
     Options.v().set_validate(true);
     Options.v().set_allow_phantom_refs(true);
+    Options.v().set_ignore_resolving_levels(true);
     // Load the necessary classes
     logger.info("");
     logger.info("Soot is Loading classes...");
-    Scene.v().loadNecessaryClasses();
+    Scene.v()
+        .loadNecessaryClasses(); // the classes are resolved at signature level, fields, and method
+    // signatures are resolved.
   }
 
   public static void usage() {
