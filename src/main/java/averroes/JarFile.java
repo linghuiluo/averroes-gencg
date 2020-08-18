@@ -161,6 +161,7 @@ public class JarFile {
     // Now add all those class files in the crafted JAR file to the BCEL
     // repository.
     for (String classFile : classFiles) {
+      classFile=classFile.replace('\\', '/');
       ClassParser parser = new ClassParser(placeholderJar.getPath(), classFile);
       JavaClass cls = parser.parse();
       bcelClasses.add(cls);
