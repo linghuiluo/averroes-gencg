@@ -1,13 +1,14 @@
 package averroes.gencg.android;
 
+import averroes.FrameworkType;
 import averroes.options.AverroesOptions;
 import averroes.soot.Hierarchy;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import org.apache.commons.io.IOUtils;
@@ -19,60 +20,28 @@ import pxb.android.axml.NodeVisitor;
 import soot.SootClass;
 
 /** @author Linghui Luo */
-public class AndroidEntryPointClassesDetector {
+public class AndroidEntryPointClassesDetector implements SubTypingEntryPointClassDetector {
   private static Logger logger = LoggerFactory.getLogger(AndroidEntryPointClassesDetector.class);
-  public static final String ACTIVITY_CLASS = "android.app.Activity";
-  public static final String SERVICE_CLASS = "android.app.Service";
-  public static final String GCMBASE_INTENT_SERVICE_CLASS =
-      "com.google.android.gcm.GCMBaseIntentService";
-  public static final String GCMLISTENER_SERVICE_CLASS =
-      "com.google.android.gms.gcm.GcmListenerService";
-  public static final String BROADCASTRECEIVER_CLASS = "android.content.BroadcastReceiver";
-  public static final String CONTENTPROVIDER_CLASS = "android.content.ContentProvider";
-  public static final String APPLICATION_CLASS = "android.app.Application";
-  public static final String FRAGMENT_CLASS = "android.app.Fragment";
-  public static final String SUPPORTFRAGMENT_CLASS = "android.support.v4.app.Fragment";
-  public static final String SERVICECONNECTIONINTERFACE = "android.content.ServiceConnection";
-  public static final String APPCOMPATACTIVITYCLASS_V4 = "android.support.v4.app.AppCompatActivity";
-  public static final String APPCOMPATACTIVITYCLASS_V7 = "android.support.v7.app.AppCompatActivity";
-
-  public static final String[] ANDROID_ENTRYPOINT_CLASSES = {
-    ACTIVITY_CLASS,
-    SERVICE_CLASS,
-    BROADCASTRECEIVER_CLASS,
-    CONTENTPROVIDER_CLASS,
-    GCMBASE_INTENT_SERVICE_CLASS,
-    GCMLISTENER_SERVICE_CLASS,
-    APPLICATION_CLASS,
-    FRAGMENT_CLASS,
-    SUPPORTFRAGMENT_CLASS,
-    SERVICECONNECTIONINTERFACE,
-    APPCOMPATACTIVITYCLASS_V4,
-    APPCOMPATACTIVITYCLASS_V7
-  };
-
+  protected Set<String> ANDROID_ENTRYPOINT_CLASSES;
   protected Hierarchy classHierarchy;
 
   protected String packageName; // package name stored in AndroidManifest.xml
 
-  public AndroidEntryPointClassesDetector(Hierarchy hierachy) {
+  public AndroidEntryPointClassesDetector(
+      Hierarchy hierachy, EntryPointConfigurationReader reader) {
     this.classHierarchy = hierachy;
+    this.ANDROID_ENTRYPOINT_CLASSES = reader.getEntryPointClasses(FrameworkType.ANDROID);
     readPackageName();
   }
 
   public List<SootClass> getEntryPointClasses() {
-    List<SootClass> ret = new ArrayList<>();
-    for (String androidClass : ANDROID_ENTRYPOINT_CLASSES) {
-      SootClass epClass = classHierarchy.getClass(androidClass);
-      if (epClass != null) {
-        LinkedHashSet<SootClass> entryPointClasses = classHierarchy.getSubclassesOf(epClass);
-        for (SootClass c : entryPointClasses)
-          if (c.getPackageName().startsWith(packageName)) {
-            ret.add(c);
-            logger.info(
-                "Detected Android entry point for class " + androidClass + ": " + c.getName());
-          }
-      }
+    List<SootClass> ret = getEntryPointClasses(classHierarchy, ANDROID_ENTRYPOINT_CLASSES);
+    ret =
+        ret.stream()
+            .filter(c -> c.getPackageName().startsWith(packageName))
+            .collect(Collectors.toList());
+    for (SootClass androidClass : ret) {
+      logger.info("Detected entry point class: " + androidClass.getName());
     }
     return ret;
   }

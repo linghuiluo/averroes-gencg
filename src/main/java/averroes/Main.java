@@ -10,6 +10,9 @@
 package averroes;
 
 import averroes.gencg.android.AndroidEntryPointClassesDetector;
+import averroes.gencg.android.EntryPointClassesDetector;
+import averroes.gencg.android.EntryPointConfigurationReader;
+import averroes.gencg.android.SpringEntryPointClassesDetector;
 import averroes.options.AverroesOptions;
 import averroes.soot.CodeGenerator;
 import averroes.soot.Hierarchy;
@@ -18,6 +21,7 @@ import averroes.soot.SootSceneUtil;
 import averroes.util.MathUtils;
 import averroes.util.TimeUtils;
 import averroes.util.io.Paths;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -52,6 +56,7 @@ public class Main {
       TimeUtils.splitStart();
 
       AverroesOptions.processArguments(args);
+      logger.info("Framework type: " + AverroesOptions.getFrameworkType());
 
       organizeInput();
 
@@ -126,11 +131,23 @@ public class Main {
       CodeGenerator.writeLibraryClassFile(basicClass);
     }
 
-    if (AverroesOptions.isAndroidApk()) {
-      AndroidEntryPointClassesDetector detector =
-          new AndroidEntryPointClassesDetector(Hierarchy.v());
+    EntryPointConfigurationReader reader = new EntryPointConfigurationReader();
+
+    if (!AverroesOptions.isDefaultJavaApplication()) {
+      EntryPointClassesDetector detector;
+      switch (AverroesOptions.getFrameworkType()) {
+        case FrameworkType.ANDROID:
+          detector = new AndroidEntryPointClassesDetector(Hierarchy.v(), reader);
+          break;
+        case FrameworkType.SPRING:
+          detector = new SpringEntryPointClassesDetector(Hierarchy.v(), reader);
+          break;
+        default:
+          return;
+      }
       List<SootClass> entryPointClasses = detector.getEntryPointClasses();
       CodeGenerator.v().createDummyMainClass(entryPointClasses);
+      logger.info("Generated DummyMainClass");
     }
   }
 
@@ -166,14 +183,14 @@ public class Main {
     FileUtils.forceMkdir(Paths.libraryClassesOutputDirectory());
     FileUtils.cleanDirectory(Paths.classesOutputDirectory());
 
-    // Organize the input JAR files
-    logger.info("Organizing the JAR files...");
-    JarOrganizer jarOrganizer = new JarOrganizer();
-    jarOrganizer.organizeInputJarFiles();
+    // Organize the input files
+    logger.info("Organizing the application files...");
+    ArchiveOrganizer archiveOrganizer = new ArchiveOrganizer();
+    archiveOrganizer.organizeInputJarFiles();
 
     // Print some statistics
-    logger.info("# application classes: " + jarOrganizer.applicationClassNames().size());
-    logger.info("# library classes: " + jarOrganizer.libraryClassNames().size());
+    logger.info("# application classes: " + archiveOrganizer.applicationClassNames().size());
+    logger.info("# library classes: " + archiveOrganizer.libraryClassNames().size());
   }
 
   private static void initializeSootAndLoadClasses() throws IOException {
@@ -185,13 +202,20 @@ public class Main {
     SourceLocator.v().setClassProviders(Collections.singletonList(provider));
     SootSceneUtil.addCommonDynamicClasses(provider);
     Options.v().classes().addAll(provider.getApplicationClassNames());
-    if (!AverroesOptions.isAndroidApk()) Options.v().set_main_class(AverroesOptions.getMainClass());
+    if (AverroesOptions.isDefaultJavaApplication())
+      Options.v().set_main_class(AverroesOptions.getMainClass());
+    Options.v()
+        .set_soot_classpath(
+            Paths.organizedApplicationJarFile()
+                + File.pathSeparator
+                + Paths.organizedLibraryJarFile());
     Options.v().set_validate(true);
     Options.v().set_allow_phantom_refs(true);
     Options.v().set_ignore_resolving_levels(true);
     // Load the necessary classes
     logger.info("");
     logger.info("Soot is Loading classes...");
+    logger.info("Soot class path " + Options.v().soot_classpath());
     Scene.v()
         .loadNecessaryClasses(); // the classes are resolved at signature level, fields, and method
     // signatures are resolved.

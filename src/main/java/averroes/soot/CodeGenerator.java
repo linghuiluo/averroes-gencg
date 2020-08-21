@@ -321,8 +321,10 @@ public class CodeGenerator {
         new Comparator<SootClass>() {
           @Override
           public int compare(SootClass o1, SootClass o2) {
-            if (o1.getName().startsWith(o2.getName())) return 1;
-            else return -1;
+
+            if (o1.getName().startsWith(o2.getName()) || o2.getName().startsWith(o1.getName()))
+              return o1.getName().startsWith(o2.getName()) ? 1 : -1;
+            else return o1.getName().compareTo(o2.getName());
           }
         });
 

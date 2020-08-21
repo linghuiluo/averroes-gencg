@@ -10,12 +10,14 @@
  */
 package averroes.options;
 
+import averroes.FrameworkType;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -36,6 +38,7 @@ import soot.SootClass;
  * tutorial at {@link http ://karimali.ca/averroes}
  *
  * @author Karim Ali
+ * @author Linghui Luo
  */
 public final class AverroesOptions {
 
@@ -61,28 +64,28 @@ public final class AverroesOptions {
           .required(false)
           .build();
 
-  private static Option androidApk =
-      Option.builder("apk")
-          .longOpt("android-apk")
-          .desc("the android apk")
+  private static Option frameworkType =
+      Option.builder("f")
+          .longOpt("framework-type")
+          .desc("the type of framework the application uses")
           .hasArg()
-          .argName("path")
+          .argName("type")
           .required(false)
           .build();
 
-  private static Option applicationJars =
+  private static Option applicationClassPath =
       Option.builder("a")
-          .longOpt("application-jars")
-          .desc("a list of the application JAR files separated by File.pathSeparator")
+          .longOpt("application-class-path")
+          .desc("a list of the application files separated by File.pathSeparator")
           .hasArg()
           .argName("path")
-          .required(false)
+          .required(true)
           .build();
 
-  private static Option libraryJars =
+  private static Option libraryClassPath =
       Option.builder("l")
-          .longOpt("library-jars")
-          .desc("a list of the JAR files for library dependencies separated by File.pathSeparator")
+          .longOpt("library-class-path")
+          .desc("a list of the library dependencies separated by File.pathSeparator")
           .hasArg()
           .argName("path")
           .required(false)
@@ -144,13 +147,22 @@ public final class AverroesOptions {
           .required(false)
           .build();
 
+  private static Option configEntryPoints =
+      Option.builder("c")
+          .longOpt("config")
+          .desc("the directory that containt the entry point configuration files.")
+          .hasArg(true)
+          .argName("directory")
+          .required(false)
+          .build();
+
   private static Options options =
       new Options()
           .addOption(applicationRegex)
           .addOption(mainClass)
-          .addOption(applicationJars)
-          .addOption(androidApk)
-          .addOption(libraryJars)
+          .addOption(applicationClassPath)
+          .addOption(libraryClassPath)
+          .addOption(frameworkType)
           .addOption(dynamicClassesFile)
           .addOption(tamiflexFactsFile)
           .addOption(outputDirectory)
@@ -191,7 +203,9 @@ public final class AverroesOptions {
    * @return
    */
   public static List<String> getApplicationRegex() {
-    return Arrays.asList(cmd.getOptionValue(applicationRegex.getOpt()).split(File.pathSeparator));
+    if (cmd.hasOption(applicationRegex.getOpt()))
+      return Arrays.asList(cmd.getOptionValue(applicationRegex.getOpt()).split(File.pathSeparator));
+    else return Collections.emptyList();
   }
 
   /**
@@ -204,21 +218,23 @@ public final class AverroesOptions {
   }
 
   /**
-   * The list of the application JAR files separated by {@link File#pathSeparator}.
+   * The list of the application files separated by {@link File#pathSeparator}.
    *
    * @return
    */
-  public static List<String> getApplicationJars() {
-    return Arrays.asList(cmd.getOptionValue(applicationJars.getOpt()).split(File.pathSeparator));
+  public static List<String> getApplicationClassPath() {
+    return Arrays.asList(
+        cmd.getOptionValue(applicationClassPath.getOpt()).split(File.pathSeparator));
   }
 
   /**
-   * The list of the library JAR files separated by {@link File#pathSeparator}
+   * The list of the library files separated by {@link File#pathSeparator}
    *
    * @return
    */
-  public static List<String> getLibraryJarFiles() {
-    return Arrays.asList(cmd.getOptionValue(libraryJars.getOpt(), "").split(File.pathSeparator));
+  public static List<String> getLibraryClassPath() {
+    return Arrays.asList(
+        cmd.getOptionValue(libraryClassPath.getOpt(), "").split(File.pathSeparator));
   }
 
   /**
@@ -368,6 +384,7 @@ public final class AverroesOptions {
   public static boolean isLoadedApplicationClass(String className) {
     return applicationClasses.contains(className);
   }
+
   /**
    * Check if a class belongs to the application, based on the {@link #applicationRegex} option.
    *
@@ -399,15 +416,46 @@ public final class AverroesOptions {
   }
 
   public static boolean isAndroidApk() {
-    return cmd.hasOption(androidApk.getOpt());
+    return cmd.getOptionValue(frameworkType.getOpt()).equals(FrameworkType.ANDROID.toString());
+  }
+
+  public static boolean isDefaultJavaApplication() {
+    return !cmd.hasOption(frameworkType.getOpt());
+  }
+
+  public static String getFrameworkType() {
+    if (!cmd.hasOption(frameworkType.getOpt())) return FrameworkType.DEFAULT;
+    String f = cmd.getOptionValue(frameworkType.getOpt());
+    switch (f) {
+      case "ANDROID":
+        return FrameworkType.ANDROID;
+      case "SPRING":
+        return FrameworkType.SPRING;
+      default:
+        return FrameworkType.DEFAULT;
+    }
   }
 
   public static boolean useApplicationRegex() {
-    return cmd.hasOption(applicationJars.getOpt());
+    return cmd.hasOption(applicationRegex.getOpt());
   }
 
   public static String getAndroidApk() {
     assert (!isAndroidApk());
-    return cmd.getOptionValue(androidApk.getOpt());
+    return cmd.getOptionValue(applicationClassPath.getOpt());
+  }
+
+  public static String getEntryPointClasses() {
+    String config = "config";
+    if (cmd.hasOption(configEntryPoints.getOpt()))
+      config = cmd.getOptionValue(configEntryPoints.getOpt());
+    return config + File.separator + "EntryPointClasses.txt";
+  }
+
+  public static String getEntryPointMethods() {
+    String config = "config";
+    if (cmd.hasOption(configEntryPoints.getOpt()))
+      config = cmd.getOptionValue(configEntryPoints.getOpt());
+    return config + File.separator + "EntryPointMethods.txt";
   }
 }

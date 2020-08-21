@@ -1,0 +1,18 @@
+android.app.Activity _ANDROID_
+android.app.Service _ANDROID_
+android.content.BroadcastReceiver _ANDROID_
+android.content.ContentProvider _ANDROID_
+android.app.Application _ANDROID_
+android.app.Fragment _ANDROID_
+android.support.v4.app.Fragment _ANDROID_
+android.content.ServiceConnection _ANDROID_
+android.support.v4.app.AppCompatActivity _ANDROID_
+android.support.v7.app.AppCompatActivity _ANDROID_
+com.google.android.gcm.GCMBaseIntentService _ANDROID_
+com.google.android.gms.gcm.GcmListenerService _ANDROID_
+
+org.springframework.stereotype.Service _SPRING_
+org.springframework.stereotype.Controller _SPRING_
+org.springframework.stereotype.Component _SPRING_
+
+

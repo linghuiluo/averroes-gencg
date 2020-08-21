@@ -1,0 +1,3 @@
+org.springframework.web.bind.annotation.GetMapping _SPRING_
+org.springframework.web.bind.annotation.PostMapping _SPRING_
+org.springframework.web.bind.annotation.PostMapping _SPRING_

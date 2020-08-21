@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -51,13 +52,13 @@ import soot.options.Options;
  *
  * @author karim
  */
-public class JarOrganizer {
+public class ArchiveOrganizer {
 
   private Set<String> classNames;
   private JarFile organizedApplicationJarFile;
   private JarFile organizedLibraryJarFile;
-  JarOutputStream jarFile;
-
+  private JarOutputStream jarFile;
+  private ArrayList<String> libraryClassPath;
   private Set<String> applicationClassNames;
   private Set<String> libraryClassNames;
 
@@ -69,10 +70,11 @@ public class JarOrganizer {
    * @throws IOException
    * @throws FileNotFoundException
    */
-  public JarOrganizer() throws FileNotFoundException, IOException {
+  public ArchiveOrganizer() throws FileNotFoundException, IOException {
     classNames = new HashSet<String>();
     applicationClassNames = new HashSet<String>();
     libraryClassNames = new HashSet<String>();
+    libraryClassPath = new ArrayList<>();
     if (!AverroesOptions.isAndroidApk())
       organizedApplicationJarFile = new JarFile(Paths.organizedApplicationJarFile());
     else jarFile = new JarOutputStream(new FileOutputStream(Paths.organizedApplicationJarFile()));
@@ -106,7 +108,8 @@ public class JarOrganizer {
    * @throws URISyntaxException
    */
   public void organizeInputJarFiles() throws ZipException, IOException {
-    processInputs();
+    libraryClassPath.addAll(AverroesOptions.getLibraryClassPath());
+    processApplicationFiles();
     processDependencies();
     if (organizedApplicationJarFile != null) organizedApplicationJarFile.close();
     organizedLibraryJarFile.close();
@@ -119,16 +122,17 @@ public class JarOrganizer {
    * @throws IOException
    * @throws URISyntaxException
    */
-  private void processInputs() throws ZipException, IOException {
+  private void processApplicationFiles() throws ZipException, IOException {
+    logger.info("Process application files...");
     if (!AverroesOptions.isAndroidApk())
-      AverroesOptions.getApplicationJars().forEach(jar -> processArchive(jar, true));
+      AverroesOptions.getApplicationClassPath().forEach(jar -> processArchive(jar, true));
     else processApk(AverroesOptions.getAndroidApk());
   }
 
   /** Process the dependencies of the input JAR files. */
   private void processDependencies() {
     // Add the application library dependencies
-    AverroesOptions.getLibraryJarFiles().forEach(lib -> processArchive(lib, false));
+    libraryClassPath.forEach(lib -> processArchive(lib, false));
     if (!AverroesOptions.isAndroidApk()) {
       // Add the JRE libraries
       if ("system".equals(AverroesOptions.getJreDirectory())) {
@@ -211,7 +215,7 @@ public class JarOrganizer {
         logger.debug("Writing " + c.getName() + " to " + fileName);
         streamOut = jarFile;
         writerOut = new PrintWriter(new OutputStreamWriter(streamOut));
-        int java_version = Options.java_version_7;
+        int java_version = Options.java_version_1_8;
         BafASMBackend bafBackend = new BafASMBackend(c, java_version);
         bafBackend.generateClassFile(streamOut);
       } catch (IOException e) {
@@ -235,10 +239,10 @@ public class JarOrganizer {
     Options.v().set_allow_phantom_refs(true);
     Options.v().set_no_bodies_for_excluded(true);
     String classPath = apk;
-    for (String lib : AverroesOptions.getLibraryJarFiles()) {
+    for (String lib : AverroesOptions.getLibraryClassPath()) {
       classPath += File.pathSeparator + lib;
     }
-    Options.v().set_android_jars(AverroesOptions.getLibraryJarFiles().get(0));
+    Options.v().set_android_jars(AverroesOptions.getLibraryClassPath().get(0));
     Options.v().set_soot_classpath(classPath);
     logger.info("Soot class path: " + Options.v().soot_classpath());
     Scene.v().loadNecessaryClasses();
@@ -272,6 +276,24 @@ public class JarOrganizer {
           ZipEntry entry = entries.nextElement();
           if (entry.getName().endsWith(".class")) {
             addClass(archive, entry, fromApplicationArchive);
+          } else if (entry.getName().endsWith(".jar")) {
+            if (FrameworkType.SPRING.equals(AverroesOptions.getFrameworkType())) {
+              logger.info("Extracting dependency " + entry.getName());
+              File dir = new File(AverroesOptions.getOutputDirectory() + File.separator + "lib");
+              if (!dir.exists()) dir.mkdirs();
+              File f =
+                  new File(dir + File.separator + entry.getName().replace("BOOT-INF/lib/", ""));
+              if (!f.exists()) {
+                FileOutputStream fos = new FileOutputStream(f);
+                InputStream is = archive.getInputStream(entry);
+                while (is.available() > 0) {
+                  fos.write(is.read());
+                }
+                fos.close();
+                is.close();
+              }
+              this.libraryClassPath.add(f.toString());
+            }
           }
         }
         archive.close();
@@ -313,11 +335,8 @@ public class JarOrganizer {
        */
       if (AverroesOptions.isApplicationClass(className) && fromApplicationArchive) {
         extractApplicationClassFile(archive, entry);
-        applicationClassNames.add(className);
-        AverroesOptions.loadApplicationClass(className);
       } else {
         extractLibraryClassFile(archive, entry);
-        libraryClassNames.add(className);
       }
 
       classNames.add(className);
@@ -360,7 +379,25 @@ public class JarOrganizer {
    */
   private void extractApplicationClassFile(ZipFile sourceArchive, ZipEntry entry)
       throws IOException {
-    extractClassFile(sourceArchive, entry, organizedApplicationJarFile);
+    String entryName = entry.getName();
+    if (FrameworkType.SPRING.equals(AverroesOptions.getFrameworkType())) {
+      if (entry.getName().startsWith("BOOT-INF/classes/")) {
+        entryName = entryName.replace("BOOT-INF/classes/", "");
+        extractClassFile(sourceArchive, entry, entryName, organizedApplicationJarFile);
+        String className = entryName.replace("/", ".").replace(".class", "");
+        applicationClassNames.add(className);
+        AverroesOptions.loadApplicationClass(className);
+      } else {
+        extractClassFile(sourceArchive, entry, entryName, organizedLibraryJarFile);
+        String className = entryName.replace("/", ".").replace(".class", "");
+        libraryClassNames.add(className);
+      }
+    } else {
+      extractClassFile(sourceArchive, entry, entryName, organizedApplicationJarFile);
+      String className = entryName.replace("/", ".").replace(".class", "");
+      applicationClassNames.add(className);
+      AverroesOptions.loadApplicationClass(className);
+    }
   }
 
   /**
@@ -371,7 +408,8 @@ public class JarOrganizer {
    * @throws IOException
    */
   private void extractLibraryClassFile(ZipFile sourceArchive, ZipEntry entry) throws IOException {
-    extractClassFile(sourceArchive, entry, organizedLibraryJarFile);
+    extractClassFile(sourceArchive, entry, entry.getName(), organizedLibraryJarFile);
+    libraryClassNames.add(entry.getName().replace("/", "."));
   }
 
   /**
@@ -382,10 +420,11 @@ public class JarOrganizer {
    * @param destArchive
    * @throws IOException
    */
-  private void extractClassFile(ZipFile sourceArchive, ZipEntry entry, JarFile destArchive)
+  private void extractClassFile(
+      ZipFile sourceArchive, ZipEntry entry, String entryName, JarFile destArchive)
       throws IOException {
     // Write out the class file to the destination archive directly. No
     // temporary file used.
-    destArchive.add(sourceArchive.getInputStream(entry), entry.getName());
+    destArchive.add(sourceArchive.getInputStream(entry), entryName);
   }
 }
