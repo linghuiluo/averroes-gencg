@@ -47,6 +47,7 @@ public class JarFactoryClassProvider implements ClassProvider {
   private Set<String> libraryClassNames;
   private Map<String, Resource> classes;
   private Logger logger = LoggerFactory.getLogger(JarFactoryClassProvider.class);
+  private Map<String, ClassFile> classFiles;
 
   /**
    * Construct a new class provider.
@@ -57,6 +58,7 @@ public class JarFactoryClassProvider implements ClassProvider {
     applicationClassNames = new HashSet<String>();
     libraryClassNames = new HashSet<String>();
     classes = new HashMap<String, Resource>();
+    classFiles = new HashMap<>();
     prepareJarFactoryClasspath();
   }
 
@@ -125,7 +127,6 @@ public class JarFactoryClassProvider implements ClassProvider {
   public String addClass(String path, Resource resource, boolean fromApplicationArchive)
       throws IOException {
     ClassFile c = new ClassFile(path);
-
     InputStream stream = null;
     try {
       stream = resource.open();
@@ -151,7 +152,7 @@ public class JarFactoryClassProvider implements ClassProvider {
       }
       classes.put(className, resource);
     }
-
+    classFiles.put(className, c);
     return className;
   }
 

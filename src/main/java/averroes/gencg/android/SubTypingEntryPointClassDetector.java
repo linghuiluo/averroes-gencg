@@ -11,6 +11,8 @@ import soot.SootClass;
 /** @author Linghui Luo */
 public interface SubTypingEntryPointClassDetector extends EntryPointClassesDetector {
 
+  public EntryPointTypeTag sTag = new EntryPointTypeTag(EntryPointTypeTag.SUBTYPING);
+
   default List<SootClass> getEntryPointClasses(
       Hierarchy classHierarchy, Set<String> classSignatures) {
     List<SootClass> ret = new ArrayList<>();
@@ -20,7 +22,10 @@ public interface SubTypingEntryPointClassDetector extends EntryPointClassesDetec
         LinkedHashSet<SootClass> entryPointClasses = classHierarchy.getSubclassesOf(epClass);
         entryPointClasses.forEach(
             c -> {
-              if (AverroesOptions.isLoadedApplicationClass(c.getName())) ret.add(c);
+              if (AverroesOptions.isLoadedApplicationClass(c.getName())) {
+                c.addTag(sTag);
+                ret.add(c);
+              }
             });
       }
     }

@@ -14,10 +14,9 @@ import averroes.gencg.android.EntryPointClassesDetector;
 import averroes.gencg.android.EntryPointConfigurationReader;
 import averroes.gencg.android.SpringEntryPointClassesDetector;
 import averroes.options.AverroesOptions;
+import averroes.soot.ClassFileProvider;
 import averroes.soot.CodeGenerator;
 import averroes.soot.Hierarchy;
-import averroes.soot.JarFactoryClassProvider;
-import averroes.soot.SootSceneUtil;
 import averroes.util.MathUtils;
 import averroes.util.TimeUtils;
 import averroes.util.io.Paths;
@@ -32,9 +31,9 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import soot.G;
+import soot.PackManager;
 import soot.Scene;
 import soot.SootClass;
-import soot.SourceLocator;
 import soot.options.Options;
 
 /**
@@ -66,7 +65,7 @@ public class Main {
       double timeUsedBySoot = TimeUtils.elapsedTime();
       logger.info("Soot loaded the input classes in " + timeUsedBySoot + " seconds.");
 
-      if (!AverroesOptions.isAndroidApk()) Scene.v().setMainClassFromOptions();
+      if (AverroesOptions.isDefaultJavaApplication()) Scene.v().setMainClassFromOptions();
 
       // Now let Averroes do its thing
       TimeUtils.reset();
@@ -102,52 +101,64 @@ public class Main {
 
   private static void addGeneratedClassesToJars() throws IOException, URISyntaxException {
     // Create the jar file and add all the generated class files to it.;
+    JarFile organizedAppJarFile = new JarFile(Paths.organizedApplicationJarFile());
+    organizedAppJarFile.addGeneratedClassFilesToJar(
+        Paths.applicationClassesOutputDirectory(), Paths.organizedApplicationJarFile());
     JarFile librJarFile = new JarFile(Paths.placeholderLibraryJarFile());
-    librJarFile.addGeneratedLibraryClassFiles();
+    librJarFile.addGeneratedClassFilesToJar(
+        Paths.libraryClassesOutputDirectory(), Paths.placeholderLibraryJarFile());
     JarFile aveJarFile = new JarFile(Paths.averroesLibraryClassJarFile());
     aveJarFile.addAverroesLibraryClassAndDummyMainClassFile();
   }
 
   private static void generateClasses() throws IOException {
+
     // Output some code generation statistics
     logger.info("");
     logger.info("Generating extra library classes...");
     logger.info("# generated library classes: " + CodeGenerator.v().getGeneratedClassCount());
     logger.info("# generated library methods: " + CodeGenerator.v().getGeneratedMethodCount());
 
-    // Create the Averroes library class
-    logger.info("");
-    logger.info("Creating the skeleton for Averroes's main library class...");
-    CodeGenerator.v().createAverroesLibraryClass();
-
-    // Create method bodies to the library classes
-    logger.info("Generating the method bodies for the placeholder library classes ...");
-    CodeGenerator.v().createLibraryMethodBodies();
-
-    // Create empty classes for the basic classes required internally by
-    // Soot
-    logger.info("Generating empty basic library classes required by Soot...");
-    for (SootClass basicClass : Hierarchy.v().getBasicClassesDatabase().getMissingBasicClasses()) {
-      CodeGenerator.writeLibraryClassFile(basicClass);
-    }
-
+    logger.info("Detecting Entry points");
     EntryPointConfigurationReader reader = new EntryPointConfigurationReader();
 
     if (!AverroesOptions.isDefaultJavaApplication()) {
-      EntryPointClassesDetector detector;
+      EntryPointClassesDetector cdetector;
       switch (AverroesOptions.getFrameworkType()) {
         case FrameworkType.ANDROID:
-          detector = new AndroidEntryPointClassesDetector(Hierarchy.v(), reader);
+          cdetector = new AndroidEntryPointClassesDetector(Hierarchy.v(), reader);
           break;
         case FrameworkType.SPRING:
-          detector = new SpringEntryPointClassesDetector(Hierarchy.v(), reader);
+          cdetector = new SpringEntryPointClassesDetector(Hierarchy.v(), reader);
           break;
         default:
           return;
       }
-      List<SootClass> entryPointClasses = detector.getEntryPointClasses();
+      List<SootClass> entryPointClasses = cdetector.getEntryPointClasses();
+      CodeGenerator.v().createSuperClassOfEntryPointClasses(entryPointClasses, reader);
+
+      for (SootClass c : Hierarchy.v().getApplicationClasses())
+        CodeGenerator.v().writeClassFile(Paths.applicationClassesOutputDirectory().getPath(), c);
+
       CodeGenerator.v().createDummyMainClass(entryPointClasses);
       logger.info("Generated DummyMainClass");
+
+      // Create the Averroes library class
+      logger.info("");
+      logger.info("Creating the skeleton for Averroes's main library class...");
+      CodeGenerator.v().createAverroesLibraryClass();
+
+      // Create method bodies to the library classes
+      logger.info("Generating the method bodies for the placeholder library classes ...");
+      CodeGenerator.v().createLibraryMethodBodies();
+
+      // Create empty classes for the basic classes required internally by
+      // Soot
+      logger.info("Generating empty basic library classes required by Soot...");
+      for (SootClass basicClass :
+          Hierarchy.v().getBasicClassesDatabase().getMissingBasicClasses()) {
+        CodeGenerator.writeClassFile(Paths.libraryClassesOutputDirectory().getPath(), basicClass);
+      }
     }
   }
 
@@ -194,22 +205,19 @@ public class Main {
   }
 
   private static void initializeSootAndLoadClasses() throws IOException {
+    ClassFileProvider.prepare();
     // Add the organized archives for the application and its
     // dependencies.
     // Set some soot parameters
     G.reset();
-    JarFactoryClassProvider provider = new JarFactoryClassProvider();
-    SourceLocator.v().setClassProviders(Collections.singletonList(provider));
-    SootSceneUtil.addCommonDynamicClasses(provider);
-    Options.v().classes().addAll(provider.getApplicationClassNames());
-    if (AverroesOptions.isDefaultJavaApplication())
-      Options.v().set_main_class(AverroesOptions.getMainClass());
     Options.v()
         .set_soot_classpath(
             Paths.organizedApplicationJarFile()
                 + File.pathSeparator
                 + Paths.organizedLibraryJarFile());
-    Options.v().set_validate(true);
+    Options.v()
+        .set_process_dir(
+            Collections.singletonList(Paths.organizedApplicationJarFile().getAbsolutePath()));
     Options.v().set_allow_phantom_refs(true);
     Options.v().set_ignore_resolving_levels(true);
     // Load the necessary classes
@@ -219,6 +227,7 @@ public class Main {
     Scene.v()
         .loadNecessaryClasses(); // the classes are resolved at signature level, fields, and method
     // signatures are resolved.
+    PackManager.v().runPacks();
   }
 
   public static void usage() {

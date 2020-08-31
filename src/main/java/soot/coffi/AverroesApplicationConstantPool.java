@@ -1,6 +1,7 @@
 package soot.coffi;
 
 import averroes.options.AverroesOptions;
+import averroes.soot.ClassFileProvider;
 import averroes.soot.Hierarchy;
 import averroes.util.BytecodeUtils;
 import averroes.util.DexUtils;
@@ -9,9 +10,9 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.jf.dexlib2.dexbacked.DexBackedDexFile;
 import org.jf.dexlib2.dexbacked.raw.FieldIdItem;
 import org.jf.dexlib2.dexbacked.raw.MethodIdItem;
-import org.jf.dexlib2.dexbacked.raw.RawDexFile;
 import soot.ClassSource;
 import soot.ResolutionFailedException;
 import soot.Scene;
@@ -60,9 +61,7 @@ public class AverroesApplicationConstantPool {
    * @return
    */
   private static ClassFile getCoffiClass(SootClass cls) {
-    SootMethod anyMethod = cls.methodIterator().next();
-    CoffiMethodSource methodSource = (CoffiMethodSource) anyMethod.getSource();
-    return methodSource.coffiClass;
+    return ClassFileProvider.getClassFile(cls);
   }
 
   /**
@@ -304,7 +303,7 @@ public class AverroesApplicationConstantPool {
   private Set<SootMethod> findLibraryMethodsInAndroidApplicationConstantPool() {
     Set<SootMethod> result = new HashSet<SootMethod>();
     try {
-      RawDexFile rawDex = DexUtils.getRawDex(new File(AverroesOptions.getAndroidApk()), null);
+      DexBackedDexFile rawDex = DexUtils.getRawDex(new File(AverroesOptions.getAndroidApk()), null);
       String[] methods = MethodIdItem.getMethods(rawDex);
       for (String s : methods) {
         String[] parts = s.split("->");
@@ -439,7 +438,7 @@ public class AverroesApplicationConstantPool {
   private Set<SootField> findLibraryFieldsInAndroidApplicationConstantPool() {
     Set<SootField> result = new HashSet<SootField>();
     try {
-      RawDexFile rawDex = DexUtils.getRawDex(new File(AverroesOptions.getAndroidApk()), null);
+      DexBackedDexFile rawDex = DexUtils.getRawDex(new File(AverroesOptions.getAndroidApk()), null);
       String[] fields = FieldIdItem.getFields(rawDex);
       for (String s : fields) {
         String[] parts = s.split("(->|:)");

@@ -130,6 +130,15 @@ public class Paths {
   }
 
   /**
+   * The path to the (modified) application class files.
+   *
+   * @return
+   */
+  public static File applicationClassesOutputDirectory() {
+    return new File(classesOutputDirectory(), "app");
+  }
+
+  /**
    * The path to the placeholder library JAR file.
    *
    * @return

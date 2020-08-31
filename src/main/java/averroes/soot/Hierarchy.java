@@ -2000,4 +2000,12 @@ public class Hierarchy {
     Type type = getBaseType(method.getReturnType());
     return type instanceof RefLikeType && !isLibraryClass(type);
   }
+
+  public void addGeneratedInterface(SootClass c, SootClass iface) {
+    Scene.v().addClass(iface);
+    libraryClasses.add(iface);
+    abstractLibraryClasses.add(iface);
+    librarySuperMethodsOfApplicationMethods.addAll(iface.getMethods());
+    libraryMethodCount += libraryMethodCount + iface.getMethodCount();
+  }
 }

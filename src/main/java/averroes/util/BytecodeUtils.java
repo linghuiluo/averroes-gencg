@@ -11,7 +11,14 @@ package averroes.util;
 
 import java.util.Arrays;
 import java.util.List;
-import soot.*;
+import soot.ResolutionFailedException;
+import soot.Scene;
+import soot.SootClass;
+import soot.SootField;
+import soot.SootFieldRef;
+import soot.SootMethod;
+import soot.SootMethodRef;
+import soot.Type;
 import soot.coffi.Util;
 
 public class BytecodeUtils {

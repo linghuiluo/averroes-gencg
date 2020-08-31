@@ -32,8 +32,9 @@ import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
-import org.jf.dexlib2.dexbacked.DexBackedDexFile;
 import org.jf.dexlib2.iface.ClassDef;
+import org.jf.dexlib2.iface.DexFile;
+import org.jf.dexlib2.iface.MultiDexContainer.DexEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import soot.G;
@@ -124,9 +125,17 @@ public class ArchiveOrganizer {
    */
   private void processApplicationFiles() throws ZipException, IOException {
     logger.info("Process application files...");
-    if (!AverroesOptions.isAndroidApk())
-      AverroesOptions.getApplicationClassPath().forEach(jar -> processArchive(jar, true));
-    else processApk(AverroesOptions.getAndroidApk());
+    switch (AverroesOptions.getFrameworkType()) {
+      case FrameworkType.ANDROID:
+        processApk(AverroesOptions.getAndroidApk());
+        break;
+      case FrameworkType.SPRING:
+        AverroesOptions.getApplicationClassPath().forEach(jar -> processExecutableJar(jar));
+        break;
+      default:
+        AverroesOptions.getApplicationClassPath().forEach(jar -> processArchive(jar, true));
+        return;
+    }
   }
 
   /** Process the dependencies of the input JAR files. */
@@ -168,14 +177,15 @@ public class ArchiveOrganizer {
   private void processApk(String apk) {
     try {
       initializeSootForAndroid(apk);
-      List<SootClass> filteredClasses = new ArrayList<SootClass>();
+      Set<SootClass> filteredClasses = new HashSet<SootClass>();
       File apkFile = new File(apk);
       if (apkFile.getName().endsWith(".apk")) {
         logger.info("Processing input apk: " + apkFile.getAbsolutePath());
-        List<DexContainer> dexFiles = DexFileProvider.v().getDexFromSource(apkFile);
+        List<DexContainer<? extends DexFile>> dexFiles =
+            DexFileProvider.v().getDexFromSource(apkFile);
         for (DexContainer dex : dexFiles) {
-          DexBackedDexFile base = dex.getBase();
-          for (ClassDef c : base.getClasses()) {
+          DexEntry<DexFile> base = dex.getBase();
+          for (ClassDef c : base.getDexFile().getClasses()) {
             String typeName = c.getType();
             typeName = typeName.replace('/', '.');
             String className = typeName.substring(1, typeName.length() - 1);
@@ -200,11 +210,17 @@ public class ArchiveOrganizer {
    * Write filteredClass into organized-app.jar with soot.
    *
    * @param filteredClasses
+   * @throws IOException
+   * @throws FileNotFoundException
    */
-  private void writeOrganizedApplicationJarFile(List<SootClass> filteredClasses) {
+  private void writeOrganizedApplicationJarFile(Set<SootClass> filteredClasses)
+      throws FileNotFoundException, IOException {
     OutputStream streamOut = null;
     PrintWriter writerOut = null;
+    if (jarFile == null)
+      jarFile = new JarOutputStream(new FileOutputStream(Paths.organizedApplicationJarFile()));
     for (SootClass c : filteredClasses) {
+
       String fileName = c.getName().replace('.', File.separatorChar) + ".class";
       // Fix path delimiters according to ZIP specification
       fileName = fileName.replace("\\", "/");
@@ -212,7 +228,7 @@ public class ArchiveOrganizer {
       entry.setMethod(ZipEntry.DEFLATED);
       try {
         jarFile.putNextEntry(entry);
-        logger.debug("Writing " + c.getName() + " to " + fileName);
+        logger.info("Writing " + c.getName() + " to " + fileName);
         streamOut = jarFile;
         writerOut = new PrintWriter(new OutputStreamWriter(streamOut));
         int java_version = Options.java_version_1_8;
@@ -248,6 +264,59 @@ public class ArchiveOrganizer {
     Scene.v().loadNecessaryClasses();
   }
 
+  private void processExecutableJar(String fileName) {
+    // Exit if the fileName is empty
+    if (fileName.trim().length() <= 0) {
+      return;
+    }
+
+    File file = new File(fileName);
+    if (file.getName().endsWith(".jar")) {
+      logger.info("Processing executable jar: " + file.getAbsolutePath());
+
+      try {
+        ZipFile archive = new ZipFile(file);
+        Enumeration<? extends ZipEntry> entries = archive.entries();
+
+        while (entries.hasMoreElements()) {
+          ZipEntry entry = entries.nextElement();
+          if (entry.getName().endsWith(".class")) {
+            if (entry.getName().startsWith("BOOT-INF/classes/")) {
+
+              addClass(archive, entry, true);
+            } else {
+
+              // TODO. check if it is spring class or not
+              addClass(archive, entry, false);
+            }
+          } else if (entry.getName().endsWith(".jar")) {
+            if (FrameworkType.SPRING.equals(AverroesOptions.getFrameworkType())) {
+              // logger.info("Extracting dependency " + entry.getName());
+              File dir = new File(AverroesOptions.getOutputDirectory() + File.separator + "lib");
+              if (!dir.exists()) dir.mkdirs();
+              File f =
+                  new File(dir + File.separator + entry.getName().replace("BOOT-INF/lib/", ""));
+              if (!f.exists()) {
+                FileOutputStream fos = new FileOutputStream(f);
+                InputStream is = archive.getInputStream(entry);
+                while (is.available() > 0) {
+                  fos.write(is.read());
+                }
+                fos.close();
+                is.close();
+              }
+              this.libraryClassPath.add(f.toString());
+            }
+          }
+        }
+        archive.close();
+      } catch (IOException e) {
+        e.printStackTrace();
+        System.exit(1);
+      }
+    }
+  }
+
   /**
    * Process a given JAR file.
    *
@@ -264,7 +333,7 @@ public class ArchiveOrganizer {
     if (file.getName().endsWith(".jar")) {
       logger.info(
           "Processing "
-              + (fromApplicationArchive ? "input" : "library")
+              + (fromApplicationArchive ? "application" : "library")
               + " archive: "
               + file.getAbsolutePath());
 
@@ -276,24 +345,6 @@ public class ArchiveOrganizer {
           ZipEntry entry = entries.nextElement();
           if (entry.getName().endsWith(".class")) {
             addClass(archive, entry, fromApplicationArchive);
-          } else if (entry.getName().endsWith(".jar")) {
-            if (FrameworkType.SPRING.equals(AverroesOptions.getFrameworkType())) {
-              logger.info("Extracting dependency " + entry.getName());
-              File dir = new File(AverroesOptions.getOutputDirectory() + File.separator + "lib");
-              if (!dir.exists()) dir.mkdirs();
-              File f =
-                  new File(dir + File.separator + entry.getName().replace("BOOT-INF/lib/", ""));
-              if (!f.exists()) {
-                FileOutputStream fos = new FileOutputStream(f);
-                InputStream is = archive.getInputStream(entry);
-                while (is.available() > 0) {
-                  fos.write(is.read());
-                }
-                fos.close();
-                is.close();
-              }
-              this.libraryClassPath.add(f.toString());
-            }
           }
         }
         archive.close();
@@ -387,10 +438,6 @@ public class ArchiveOrganizer {
         String className = entryName.replace("/", ".").replace(".class", "");
         applicationClassNames.add(className);
         AverroesOptions.loadApplicationClass(className);
-      } else {
-        extractClassFile(sourceArchive, entry, entryName, organizedLibraryJarFile);
-        String className = entryName.replace("/", ".").replace(".class", "");
-        libraryClassNames.add(className);
       }
     } else {
       extractClassFile(sourceArchive, entry, entryName, organizedApplicationJarFile);
@@ -398,6 +445,7 @@ public class ArchiveOrganizer {
       applicationClassNames.add(className);
       AverroesOptions.loadApplicationClass(className);
     }
+    logger.info("Extracting application class " + entryName);
   }
 
   /**

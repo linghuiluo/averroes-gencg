@@ -6,7 +6,15 @@ import averroes.soot.Names;
 import averroes.util.io.Printers;
 import averroes.util.io.Printers.PrinterType;
 import java.util.HashMap;
-import soot.*;
+import soot.BooleanType;
+import soot.Local;
+import soot.Modifier;
+import soot.Scene;
+import soot.SootClass;
+import soot.SootField;
+import soot.SootFieldRef;
+import soot.SootMethod;
+import soot.Value;
 import soot.jimple.AssignStmt;
 import soot.jimple.Jimple;
 

@@ -9,8 +9,25 @@ import averroes.soot.SootSceneUtil;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import soot.*;
-import soot.jimple.*;
+import soot.DoubleType;
+import soot.FloatType;
+import soot.LongType;
+import soot.Modifier;
+import soot.PrimType;
+import soot.Scene;
+import soot.SootClass;
+import soot.SootField;
+import soot.SootMethod;
+import soot.Type;
+import soot.Value;
+import soot.VoidType;
+import soot.jimple.DoubleConstant;
+import soot.jimple.FloatConstant;
+import soot.jimple.IntConstant;
+import soot.jimple.Jimple;
+import soot.jimple.JimpleBody;
+import soot.jimple.LongConstant;
+import soot.jimple.NullConstant;
 
 /**
  * The master-mind of Averroes. That's where the magic of generating code for library classes

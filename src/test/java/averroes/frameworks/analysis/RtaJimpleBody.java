@@ -7,7 +7,13 @@ import averroes.util.io.Printers;
 import averroes.util.io.Printers.PrinterType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import soot.*;
+import soot.BooleanType;
+import soot.Local;
+import soot.Modifier;
+import soot.Scene;
+import soot.SootClass;
+import soot.SootMethod;
+import soot.Value;
 import soot.jimple.AssignStmt;
 
 /**

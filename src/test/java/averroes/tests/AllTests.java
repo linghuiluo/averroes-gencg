@@ -1,6 +1,15 @@
 package averroes.tests;
 
-import averroes.tests.junit.*;
+import averroes.tests.junit.TestAnonymousClasses;
+import averroes.tests.junit.TestArrays;
+import averroes.tests.junit.TestCasting;
+import averroes.tests.junit.TestExceptions;
+import averroes.tests.junit.TestInheritance;
+import averroes.tests.junit.TestLinkedList;
+import averroes.tests.junit.TestMultipleClasses;
+import averroes.tests.junit.TestNestedClasses;
+import averroes.tests.junit.TestPrivateClasses;
+import averroes.tests.junit.TestSimple;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;

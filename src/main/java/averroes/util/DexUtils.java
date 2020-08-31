@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import org.jf.dexlib2.Opcodes;
-import org.jf.dexlib2.dexbacked.raw.RawDexFile;
+import org.jf.dexlib2.dexbacked.DexBackedDexFile;
 import soot.Scene;
 
 /**
@@ -23,7 +23,7 @@ public class DexUtils {
    *
    * @return
    */
-  public static RawDexFile getRawDex(File dexFile, String dexEntry) throws IOException {
+  public static DexBackedDexFile getRawDex(File dexFile, String dexEntry) throws IOException {
     ZipFile zipFile = null;
     boolean isZipFile = false;
     try {
@@ -45,7 +45,7 @@ public class DexUtils {
       int api = Scene.v().getAndroidAPIVersion();
       Opcodes opcodes = Opcodes.forApi(api);
 
-      return new RawDexFile(opcodes, dexBytes);
+      return new DexBackedDexFile(opcodes, dexBytes);
     } catch (IOException ex) {
       // don't continue on if we know it's a zip file
       if (isZipFile) {

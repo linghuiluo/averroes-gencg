@@ -9,6 +9,11 @@
  */
 package averroes.soot;
 
+import averroes.FrameworkType;
+import averroes.gencg.android.AnnotationEntryPointMethodDetector;
+import averroes.gencg.android.EntryPointConfigurationReader;
+import averroes.gencg.android.EntryPointTypeTag;
+import averroes.gencg.android.SpringEntryPointMethodDetector;
 import averroes.options.AverroesOptions;
 import averroes.tamiflex.TamiFlexFactsDatabase;
 import averroes.util.io.Paths;
@@ -16,8 +21,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -51,6 +54,7 @@ import soot.SourceLocator;
 import soot.Type;
 import soot.Value;
 import soot.VoidType;
+import soot.baf.BafASMBackend;
 import soot.dava.internal.javaRep.DIntConstant;
 import soot.javaToJimple.LocalGenerator;
 import soot.jimple.AssignStmt;
@@ -65,13 +69,13 @@ import soot.jimple.NullConstant;
 import soot.jimple.StringConstant;
 import soot.jimple.toolkits.scalar.NopEliminator;
 import soot.options.Options;
-import soot.util.JasminOutputStream;
 
 /**
  * The master-mind of Averroes. That's where the magic of generating code for library classes
  * happen.
  *
  * @author karim
+ * @author Linghui Luo
  */
 public class CodeGenerator {
 
@@ -114,22 +118,15 @@ public class CodeGenerator {
    * @param cls
    * @throws IOException
    */
-  public static void writeLibraryClassFile(SootClass cls) throws IOException {
-    Options.v().set_output_dir(Paths.libraryClassesOutputDirectory().getPath());
-
-    File file = new File(SourceLocator.v().getFileNameFor(cls, Options.output_format_class));
+  public static void writeClassFile(String outputDir, SootClass cls) throws IOException {
+    Options.v().set_output_dir(outputDir);
+    int java_version = Options.v().java_version();
+    String fileName = SourceLocator.v().getFileNameFor(cls, Options.output_format_class);
+    File file = new File(fileName);
     file.getParentFile().mkdirs();
-
-    OutputStream streamOut = new JasminOutputStream(new FileOutputStream(file));
-    PrintWriter writerOut = new PrintWriter(new OutputStreamWriter(streamOut));
-
-    if (cls.containsBafBody()) {
-      new soot.baf.JasminClass(cls).print(writerOut);
-    } else {
-      new soot.jimple.JasminClass(cls).print(writerOut);
-    }
-
-    writerOut.flush();
+    OutputStream streamOut = new FileOutputStream(fileName);
+    BafASMBackend backend = new BafASMBackend(cls, java_version);
+    backend.generateClassFile(streamOut);
     streamOut.close();
   }
 
@@ -255,7 +252,7 @@ public class CodeGenerator {
       createAverroesAbstractLibraryDoItAll();
 
       // Write the class file to disk
-      writeLibraryClassFile(averroesAbstractLibraryClass);
+      writeClassFile(Paths.libraryClassesOutputDirectory().getPath(), averroesAbstractLibraryClass);
     }
 
     // Now create the AverroesLibraryClass which basically implements the
@@ -278,13 +275,13 @@ public class CodeGenerator {
       createAverroesLibraryDoItAll();
 
       // Write the class file to disk
-      writeLibraryClassFile(averroesLibraryClass);
+      writeClassFile(Paths.libraryClassesOutputDirectory().getPath(), averroesLibraryClass);
     }
   }
 
   /**
-   * Create a dummy main class for Android apk. Instances for all entry point classes are created in
-   * the main method.
+   * Create a dummy main class for Android/Spring app. Instances for all entry point classes are
+   * created in the main method.
    *
    * @param entryPointClasses
    * @throws IOException
@@ -375,7 +372,7 @@ public class CodeGenerator {
     // Finally validate the Jimple body
     body.validate();
     mainMethod.setActiveBody(body);
-    writeLibraryClassFile(dummyMainClass);
+    writeClassFile(Paths.libraryClassesOutputDirectory().getPath(), dummyMainClass);
   }
 
   protected boolean isSimpleType(String t) {
@@ -423,7 +420,7 @@ public class CodeGenerator {
           method.setPhantom(false);
         }
       }
-      writeLibraryClassFile(libraryClass);
+      writeClassFile(Paths.libraryClassesOutputDirectory().getPath(), libraryClass);
     }
   }
 
@@ -1050,6 +1047,41 @@ public class CodeGenerator {
   }
 
   /**
+   * Generate the name of any interface that GenCG creates.
+   *
+   * @param cls
+   * @return
+   */
+  private String generateCraftedInterfaceName(SootClass cls) {
+    // return cls.getName();
+    return cls.getName().concat("__GenCG");
+  }
+
+  private void createSuperClass(SootClass entryPointClass, List<SootMethod> entryPointMethods)
+      throws IOException {
+    SootClass iface = new SootClass(generateCraftedInterfaceName(entryPointClass));
+    iface.setModifiers(Modifier.PUBLIC | Modifier.ABSTRACT);
+    iface.setSuperclass(Hierarchy.v().getJavaLangObject());
+    SootMethod constructor = Hierarchy.getNewDefaultConstructor();
+    iface.addMethod(constructor);
+    for (SootMethod e : entryPointMethods) {
+      addMethodToGeneratedClass(
+          iface,
+          new SootMethod(
+              e.getName(),
+              e.getParameterTypes(),
+              e.getReturnType(),
+              e.getModifiers(),
+              e.getExceptions()));
+    }
+    iface.setApplicationClass();
+    entryPointClass.setSuperclass(iface);
+    Hierarchy.v().getApplicationClasses().add(iface);
+    Hierarchy.v().addGeneratedInterface(entryPointClass, iface);
+    // TODO: generate averroes jimple body.
+  }
+
+  /**
    * Create a class that implements the given interface.
    *
    * @param iface
@@ -1150,6 +1182,33 @@ public class CodeGenerator {
         Hierarchy.makePublic(generatedClass.getMethod(Names.DEFAULT_CONSTRUCTOR_SUBSIG));
       } else {
         addMethodToGeneratedClass(generatedClass, Hierarchy.getNewDefaultConstructor());
+      }
+    }
+  }
+
+  /**
+   * Create crafted interface of each annotated entry point class
+   *
+   * @param entryPointClasses
+   * @throws IOException
+   */
+  public void createSuperClassOfEntryPointClasses(
+      List<SootClass> entryPointClasses, EntryPointConfigurationReader reader) throws IOException {
+
+    AnnotationEntryPointMethodDetector mdetector = null;
+    switch (AverroesOptions.getFrameworkType()) {
+      case FrameworkType.SPRING:
+        mdetector =
+            new SpringEntryPointMethodDetector(reader.getEntryPointMethods(FrameworkType.SPRING));
+        break;
+      default:
+        return;
+    }
+    for (SootClass c : entryPointClasses) {
+      EntryPointTypeTag t = (EntryPointTypeTag) c.getTag("EntryPointTypeTag");
+      if (t.hasTypeOfAnnotation()) {
+        List<SootMethod> eMethods = mdetector.getEntryPointMethods(c);
+        createSuperClass(c, eMethods);
       }
     }
   }

@@ -12,7 +12,14 @@ package averroes;
 import averroes.exceptions.Assertions;
 import averroes.soot.Names;
 import averroes.util.io.Paths;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -90,15 +97,12 @@ public class JarFile {
   }
 
   /**
-   * Add all the generated class files to the Jar file.
+   * Add all the generated class files in directory to the Jar file.
    *
    * @throws IOException
    */
-  public void addGeneratedLibraryClassFiles() throws IOException {
+  public void addGeneratedClassFilesToJar(File dir, File jarFile) throws IOException {
     Set<String> classFiles = new HashSet<>();
-    File dir = Paths.libraryClassesOutputDirectory();
-    File placeholderJar = Paths.placeholderLibraryJarFile();
-
     // Add the class files to the crafted JAR file.
     FileUtils.listFiles(dir, new String[] {"class"}, true)
         .stream()
@@ -122,7 +126,7 @@ public class JarFile {
     // Now add all those class files in the crafted JAR file to the BCEL
     // repository.
     for (String classFile : classFiles) {
-      ClassParser parser = new ClassParser(placeholderJar.getPath(), classFile);
+      ClassParser parser = new ClassParser(jarFile.getPath(), classFile);
       JavaClass cls = parser.parse();
       bcelClasses.add(cls);
     }
