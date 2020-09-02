@@ -183,8 +183,8 @@ public class ArchiveOrganizer {
         logger.info("Processing input apk: " + apkFile.getAbsolutePath());
         List<DexContainer<? extends DexFile>> dexFiles =
             DexFileProvider.v().getDexFromSource(apkFile);
-        for (DexContainer dex : dexFiles) {
-          DexEntry<DexFile> base = dex.getBase();
+        for (DexContainer<? extends DexFile> dex : dexFiles) {
+          DexEntry<? extends DexFile> base = dex.getBase();
           for (ClassDef c : base.getDexFile().getClasses()) {
             String typeName = c.getType();
             typeName = typeName.replace('/', '.');

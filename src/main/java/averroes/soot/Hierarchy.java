@@ -2004,7 +2004,7 @@ public class Hierarchy {
   public void addGeneratedInterface(SootClass c, SootClass iface) {
     Scene.v().addClass(iface);
     libraryClasses.add(iface);
-    abstractLibraryClasses.add(iface);
+    libraryInterfaces.add(iface);
     librarySuperMethodsOfApplicationMethods.addAll(iface.getMethods());
     libraryMethodCount += libraryMethodCount + iface.getMethodCount();
   }

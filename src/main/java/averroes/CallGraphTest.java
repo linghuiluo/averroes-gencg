@@ -1,6 +1,7 @@
 package averroes;
 
 import averroes.util.io.FileFilters;
+import cgs.CGSerializer;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -13,7 +14,6 @@ import soot.PackManager;
 import soot.Scene;
 import soot.SootMethod;
 import soot.jimple.toolkits.callgraph.CallGraph;
-import soot.jimple.toolkits.callgraph.Edge;
 import soot.options.Options;
 
 public class CallGraphTest {
@@ -64,7 +64,6 @@ public class CallGraphTest {
     Options.v().setPhaseOption("cg.spark", "on");
     Options.v().set_whole_program(true);
     Options.v().set_main_class("averroes.DummyMainClass");
-    Scene.v().addBasicClass("averroes.Library");
     System.out.println(classPath);
     Scene.v().loadNecessaryClasses();
     System.out.println(Scene.v().getClasses().size());
@@ -76,9 +75,6 @@ public class CallGraphTest {
 
     PackManager.v().runPacks();
     CallGraph cg = Scene.v().getCallGraph();
-    System.out.println("cg size: " + cg.size());
-    for (Edge c : cg) {
-      if (c.toString().contains("onlineshop")) System.err.println(c.toString());
-    }
+    CGSerializer.serialize(cg, appDir + "onlineshop_cg.json");
   }
 }

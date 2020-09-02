@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -52,9 +53,13 @@ import soot.SootMethod;
 import soot.SootMethodRef;
 import soot.SourceLocator;
 import soot.Type;
+import soot.Unit;
+import soot.UnitPatchingChain;
 import soot.Value;
 import soot.VoidType;
+import soot.baf.Baf;
 import soot.baf.BafASMBackend;
+import soot.baf.SpecialInvokeInst;
 import soot.dava.internal.javaRep.DIntConstant;
 import soot.javaToJimple.LocalGenerator;
 import soot.jimple.AssignStmt;
@@ -1057,11 +1062,10 @@ public class CodeGenerator {
     return cls.getName().concat("__GenCG");
   }
 
-  private void createSuperClass(SootClass entryPointClass, List<SootMethod> entryPointMethods)
-      throws IOException {
+  private SootClass createCraftedInterface(
+      SootClass entryPointClass, List<SootMethod> entryPointMethods) throws IOException {
     SootClass iface = new SootClass(generateCraftedInterfaceName(entryPointClass));
-    iface.setModifiers(Modifier.PUBLIC | Modifier.ABSTRACT);
-    iface.setSuperclass(Hierarchy.v().getJavaLangObject());
+    iface.setModifiers(Modifier.PUBLIC | Modifier.INTERFACE);
     SootMethod constructor = Hierarchy.getNewDefaultConstructor();
     iface.addMethod(constructor);
     for (SootMethod e : entryPointMethods) {
@@ -1074,11 +1078,9 @@ public class CodeGenerator {
               e.getModifiers(),
               e.getExceptions()));
     }
-    iface.setApplicationClass();
-    entryPointClass.setSuperclass(iface);
-    Hierarchy.v().getApplicationClasses().add(iface);
+    entryPointClass.addInterface(iface);
     Hierarchy.v().addGeneratedInterface(entryPointClass, iface);
-    // TODO: generate averroes jimple body.
+    return iface;
   }
 
   /**
@@ -1192,7 +1194,7 @@ public class CodeGenerator {
    * @param entryPointClasses
    * @throws IOException
    */
-  public void createSuperClassOfEntryPointClasses(
+  public void createCraftedInterfacesOfEntryPointClasses(
       List<SootClass> entryPointClasses, EntryPointConfigurationReader reader) throws IOException {
 
     AnnotationEntryPointMethodDetector mdetector = null;
@@ -1208,8 +1210,33 @@ public class CodeGenerator {
       EntryPointTypeTag t = (EntryPointTypeTag) c.getTag("EntryPointTypeTag");
       if (t.hasTypeOfAnnotation()) {
         List<SootMethod> eMethods = mdetector.getEntryPointMethods(c);
-        createSuperClass(c, eMethods);
+        SootClass iface = createCraftedInterface(c, eMethods);
+        replaceInvokeToSuperclassConstructor(c, iface);
       }
     }
+  }
+
+  private void replaceInvokeToSuperclassConstructor(SootClass c, SootClass iface) {
+    SootMethod constructor = c.getMethodByName(SootMethod.constructorName);
+    UnitPatchingChain units = constructor.getActiveBody().getUnits();
+    Iterator<Unit> it = units.snapshotIterator();
+    List<Unit> toInsert = new ArrayList<>();
+    SootMethodRef methodRef =
+        Scene.v()
+            .makeConstructorRef(
+                iface, iface.getMethodByName(SootMethod.constructorName).getParameterTypes());
+    Unit insert = Baf.v().newSpecialInvokeInst(methodRef);
+    toInsert.add(insert);
+    Unit toRemove = null;
+    while (it.hasNext()) {
+      Unit u = it.next();
+      if (u instanceof SpecialInvokeInst) {
+
+        units.insertBefore(toInsert, u);
+        toRemove = u;
+        break;
+      }
+    }
+    units.remove(toRemove);
   }
 }

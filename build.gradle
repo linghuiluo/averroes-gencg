@@ -16,6 +16,7 @@ version '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 dependencies {
@@ -30,6 +31,7 @@ dependencies {
     implementation 'commons-cli:commons-cli:1.4'
     implementation 'org.apache.bcel:bcel:6.4.1'
     implementation 'org.ow2.asm:asm:7.2'
+    implementation 'de.upb.swt:CGSerializer:0.0.2'
     implementation files('libs/probe.jar')
     //implementation files('libs/sootclasses-trunk-jar-with-dependencies.jar')
     //testImplementation 'de.tud.sse:soot-infoflow:2.7.1.1'

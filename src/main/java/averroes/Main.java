@@ -112,7 +112,6 @@ public class Main {
   }
 
   private static void generateClasses() throws IOException {
-
     // Output some code generation statistics
     logger.info("");
     logger.info("Generating extra library classes...");
@@ -135,7 +134,7 @@ public class Main {
           return;
       }
       List<SootClass> entryPointClasses = cdetector.getEntryPointClasses();
-      CodeGenerator.v().createSuperClassOfEntryPointClasses(entryPointClasses, reader);
+      CodeGenerator.v().createCraftedInterfacesOfEntryPointClasses(entryPointClasses, reader);
 
       for (SootClass c : Hierarchy.v().getApplicationClasses())
         CodeGenerator.v().writeClassFile(Paths.applicationClassesOutputDirectory().getPath(), c);
