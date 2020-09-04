@@ -918,9 +918,7 @@ public class AverroesJimpleBody {
    */
   public Local insertSpecialInvokeNewStmt(Type type, SootMethod toInvoke) {
     List<Value> args =
-        toInvoke
-            .getParameterTypes()
-            .stream()
+        toInvoke.getParameterTypes().stream()
             .map(p -> getCompatibleValue(p))
             .collect(Collectors.toList());
 

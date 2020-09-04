@@ -10,6 +10,7 @@
 package averroes;
 
 import averroes.exceptions.Assertions;
+import averroes.options.AverroesOptions;
 import averroes.soot.Names;
 import averroes.util.io.Paths;
 import java.io.BufferedInputStream;
@@ -104,16 +105,16 @@ public class JarFile {
   public void addGeneratedClassFilesToJar(File dir, File jarFile) throws IOException {
     Set<String> classFiles = new HashSet<>();
     // Add the class files to the crafted JAR file.
-    FileUtils.listFiles(dir, new String[] {"class"}, true)
-        .stream()
+    FileUtils.listFiles(dir, new String[] {"class"}, true).stream()
         .forEach(
             file -> {
               try {
                 String className = relativize(dir, file);
                 if (!className.equals(Names.AVERROES_LIBRARY_CLASS_BC_SIG + ".class")
-                    && !className.equals(Names.DUMMYMAIN_CLASS_BC_SIG + ".class")
-                    && !className.startsWith("java\\")
-                    && !className.startsWith("javax\\")) {
+                    && !className.equals(Names.DUMMYMAIN_CLASS_BC_SIG + ".class")) {
+                  if (AverroesOptions.isAndroidApk()
+                      && className.startsWith("java\\")
+                      && className.startsWith("javax\\")) return;
                   add(dir, file);
                   classFiles.add(className.replace("\\", "/"));
                 }
@@ -121,6 +122,7 @@ public class JarFile {
                 e.printStackTrace();
               }
             });
+
     close();
 
     // Now add all those class files in the crafted JAR file to the BCEL
@@ -143,8 +145,7 @@ public class JarFile {
     File placeholderJar = Paths.placeholderFrameworkJarFile();
 
     // Add the class files to the crafted JAR file.
-    FileUtils.listFiles(dir, new String[] {"class"}, true)
-        .stream()
+    FileUtils.listFiles(dir, new String[] {"class"}, true).stream()
         .forEach(
             file -> {
               try {
@@ -188,8 +189,7 @@ public class JarFile {
     File averroesLibraryClassJar = Paths.averroesLibraryClassJarFile();
 
     Set<String> classFiles = new HashSet<>();
-    FileUtils.listFiles(dir, new String[] {"class"}, true)
-        .stream()
+    FileUtils.listFiles(dir, new String[] {"class"}, true).stream()
         .forEach(
             f -> {
               try {
@@ -361,23 +361,21 @@ public class JarFile {
    */
   public static void verifyJarFile(String file) {
     try (java.util.jar.JarFile jarFile = new java.util.jar.JarFile(new File(file))) {
-      jarFile
-          .stream()
+      jarFile.stream()
           .forEach(
               entry -> {
                 if (entry.getName().endsWith(".class")) {
+                  ClassReader classReader;
                   try {
-                    ClassReader classReader = new ClassReader(jarFile.getInputStream(entry));
+                    classReader = new ClassReader(jarFile.getInputStream(entry));
                     ClassWriter classWriter =
                         new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
                     ClassVisitor classVisitor = new CheckClassAdapter(classWriter, true);
                     classReader.accept(classVisitor, 0);
-
                     StringWriter stringWriter = new StringWriter();
                     PrintWriter printWriter = new PrintWriter(stringWriter);
                     CheckClassAdapter.verify(
                         new ClassReader(classWriter.toByteArray()), false, printWriter);
-
                     Assertions.asmVerificationOk(stringWriter);
                   } catch (IOException e) {
                     e.printStackTrace();

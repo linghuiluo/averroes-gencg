@@ -41,8 +41,7 @@ public class ExpectedOutputPrinter {
       Scene.v().loadNecessaryClasses();
 
       // Print out Jimple files
-      SootSceneUtil.getClasses()
-          .stream()
+      SootSceneUtil.getClasses().stream()
           .map(c -> c.getMethods())
           .flatMap(List::stream)
           .filter(SootMethod::isConcrete)

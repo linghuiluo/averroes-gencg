@@ -221,21 +221,15 @@ public class SootClassJson {
     // Without those
     // default
     // constructors, Averroes will just drop dead.
-    return callsDiff
-            .keySet()
-            .stream()
+    return callsDiff.keySet().stream()
             .allMatch(m -> m.contains("$") && m.endsWith("void <init>()>"))
-        && callsDiff
-            .values()
-            .stream()
+        && callsDiff.values().stream()
             .flatMap(Collection::stream)
             .allMatch(c -> c.endsWith("void <init>()>"));
   }
 
   private boolean ignoreFieldWrites(Map<String, HashSet<String>> fieldWritesDiff) {
-    return fieldWritesDiff
-        .keySet()
-        .stream()
+    return fieldWritesDiff.keySet().stream()
         .allMatch(m -> m.contains("$") && m.endsWith("void <init>()>"));
   }
 

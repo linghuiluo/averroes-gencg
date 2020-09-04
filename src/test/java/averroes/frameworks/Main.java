@@ -96,6 +96,7 @@ public class Main {
       // Create the jar file, add all the generated class files to it, and, finally,
       // verify it using ASM.
       TimeUtils.reset();
+
       JarFile frameworkJarFile = new JarFile(Paths.placeholderFrameworkJarFile());
       frameworkJarFile.addGeneratedFrameworkClassFiles();
       JarFile.verifyJarFile(Paths.placeholderFrameworkJarFile().toString());

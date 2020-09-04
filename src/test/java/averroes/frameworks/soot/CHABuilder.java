@@ -24,8 +24,7 @@ public class CHABuilder {
 
   public void run() {
     cg = new CallGraph();
-    SootSceneUtil.getClasses()
-        .stream()
+    SootSceneUtil.getClasses().stream()
         .map(c -> c.getMethods())
         .flatMap(List::stream)
         .filter(SootMethod::isConcrete)
@@ -34,9 +33,7 @@ public class CHABuilder {
   }
 
   void processMethod(SootMethod m) {
-    m.getActiveBody()
-        .getUnits()
-        .stream()
+    m.getActiveBody().getUnits().stream()
         .filter(u -> ((Stmt) u).containsInvokeExpr())
         .forEach(u -> processUnit(u, m));
   }

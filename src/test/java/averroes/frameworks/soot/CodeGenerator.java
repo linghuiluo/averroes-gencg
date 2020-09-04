@@ -46,8 +46,7 @@ public class CodeGenerator {
   public static void generateJimple() {
     // We ignore non-concrete methods, because they do not have method bodies
     // (surprise!).
-    SootSceneUtil.getClasses()
-        .stream()
+    SootSceneUtil.getClasses().stream()
         .map(SootClass::getMethods)
         .flatMap(List::stream)
         .filter(SootMethod::isConcrete)
@@ -136,8 +135,7 @@ public class CodeGenerator {
 
     // Initialize the static fields
     body.insertIdentityStmts();
-    cls.getFields()
-        .stream()
+    cls.getFields().stream()
         .filter(SootField::isStatic)
         .forEach(
             f -> {

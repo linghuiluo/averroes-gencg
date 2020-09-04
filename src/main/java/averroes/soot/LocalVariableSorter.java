@@ -15,8 +15,7 @@ public class LocalVariableSorter {
    */
   public static void transform(Body body) {
     List<Local> orderedLocals =
-        body.getUnits()
-            .stream()
+        body.getUnits().stream()
             .map(u -> u.getUseAndDefBoxes())
             .flatMap(l -> l.stream())
             .map(vb -> vb.getValue())

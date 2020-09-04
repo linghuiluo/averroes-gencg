@@ -19,7 +19,7 @@ public class CommonOptions {
   public static boolean whole = false;
 
   public static String base =
-      Paths.get("build", "classes", "java", "test", "averroes", "testsuite").toString();
+      Paths.get("target", "test-classes", "averroes", "testsuite").toString();
 
   public static IOFileFilter averroesModelFilter =
       FileFilterUtils.or(

@@ -18,6 +18,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import soot.SootClass;
 import soot.SootMethod;
 
@@ -27,6 +29,9 @@ import soot.SootMethod;
  * @author Karim Ali
  */
 public class Paths {
+
+  private static Logger logger = LoggerFactory.getLogger(Paths.class);
+
   /**
    * The path to the placeholder library class files.
    *
@@ -251,7 +256,7 @@ public class Paths {
     try {
       FileUtils.deleteDirectory(directory);
     } catch (IOException e) {
-      e.printStackTrace();
+      logger.warn(e.toString());
     }
   }
 

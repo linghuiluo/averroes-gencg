@@ -75,8 +75,7 @@ public class Tests {
    * "output.<analysis>" instead of "input." in the file name, as well in the file content.
    */
   private static void cleanupFiles(String testCase, Collection<File> files, Path dir) {
-    files
-        .stream()
+    files.stream()
         .forEach(
             file -> {
               try {
@@ -154,14 +153,12 @@ public class Tests {
 
     // Now diff each generated file with its corresponding expected one,
     // ignoring the xta.XTA and rta.RTA files for now
-    expectedFiles
-        .stream()
+    expectedFiles.stream()
         .filter(f -> !f.getPath().endsWith(xtaJson) && !f.getPath().endsWith(rtaJson))
         .forEach(
             expectedJsonFile -> {
               File generatedJsonFile =
-                  generatedFiles
-                      .stream()
+                  generatedFiles.stream()
                       .filter(f -> f.getName().equals(expectedJsonFile.getName()))
                       .findFirst()
                       .get();
@@ -201,14 +198,12 @@ public class Tests {
 
     // Now diff each generated file with its corresponding expected one,
     // ignoring the xta.XTA and rta.RTA files for now
-    generated
-        .stream()
+    generated.stream()
         .filter(f -> !f.getPath().endsWith(xtaJimple) && !f.getPath().endsWith(rtaJimple))
         .forEach(
             g -> {
               File e =
-                  expected
-                      .stream()
+                  expected.stream()
                       .filter(
                           f ->
                               f.getName()

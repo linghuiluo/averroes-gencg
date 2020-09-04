@@ -60,8 +60,7 @@ public class SootUtils {
    * This hack helps work around some of the verification that BCEL performs in Pass3b.
    */
   private static void makeFieldsVisible() {
-    SootSceneUtil.getClasses()
-        .stream()
+    SootSceneUtil.getClasses().stream()
         .map(c -> c.getFields())
         .flatMap(Collection::stream)
         .filter(f -> !(Modifier.isPublic(f.getModifiers()) || Modifier.isPrivate(f.getModifiers())))
@@ -75,8 +74,7 @@ public class SootUtils {
    */
   private static void removeUnusedFields() {
     Set<SootField> usedFields =
-        SootSceneUtil.getClasses()
-            .stream()
+        SootSceneUtil.getClasses().stream()
             .map(c -> c.getMethods())
             .flatMap(List::stream)
             .filter(SootMethod::hasActiveBody)
@@ -87,8 +85,7 @@ public class SootUtils {
             .map(v -> ((FieldRef) v).getField())
             .collect(Collectors.toSet());
 
-    SootSceneUtil.getClasses()
-        .stream()
+    SootSceneUtil.getClasses().stream()
         .map(c -> new ArrayList<SootField>(c.getFields()))
         .flatMap(List::stream)
         .filter(f -> f.isPrivate() && !usedFields.contains(f))

@@ -527,9 +527,7 @@ public abstract class AbstractJimpleBody {
   protected void insertSpecialInvokeStmt(
       Local base, InvokeExpr toInvoke, boolean overrideGuard, boolean generateCasts) {
     List<Value> args =
-        toInvoke
-            .getArgs()
-            .stream()
+        toInvoke.getArgs().stream()
             .map(
                 a -> {
                   if (generateCasts || a.getType() instanceof PrimType) {
@@ -539,8 +537,7 @@ public abstract class AbstractJimpleBody {
                   } else if (a instanceof StringConstant) {
                     return StringConstant.v("");
                   } else {
-                    return body.getParameterLocals()
-                        .stream()
+                    return body.getParameterLocals().stream()
                         .filter(l -> a.getType().equals(l.getType()))
                         .findFirst()
                         .get();
@@ -583,9 +580,7 @@ public abstract class AbstractJimpleBody {
   protected void insertSpecialInvokeStmt(
       Local base, SootMethod toInvoke, boolean overrideGuard, boolean generateCasts) {
     List<Value> args =
-        toInvoke
-            .getParameterTypes()
-            .stream()
+        toInvoke.getParameterTypes().stream()
             .map(
                 p -> {
                   if (generateCasts) {
@@ -593,8 +588,7 @@ public abstract class AbstractJimpleBody {
                   } else if (p.equals(NullType.v())) {
                     return NullConstant.v();
                   } else {
-                    return body.getParameterLocals()
-                        .stream()
+                    return body.getParameterLocals().stream()
                         .filter(l -> p.equals(l.getType()))
                         .findFirst()
                         .get();
@@ -616,9 +610,7 @@ public abstract class AbstractJimpleBody {
    */
   protected Local insertSpecialInvokeNewStmt(Type type, SootMethod toInvoke) {
     List<Value> args =
-        toInvoke
-            .getParameterTypes()
-            .stream()
+        toInvoke.getParameterTypes().stream()
             .map(p -> getCompatibleValue(p))
             .collect(Collectors.toList());
 
@@ -686,9 +678,7 @@ public abstract class AbstractJimpleBody {
    */
   protected void insertStaticInvokeStmt(SootMethod toInvoke) {
     List<Value> args =
-        toInvoke
-            .getParameterTypes()
-            .stream()
+        toInvoke.getParameterTypes().stream()
             .map(p -> getCompatibleValue(p))
             .collect(Collectors.toList());
     insertStmt(Jimple.v().newInvokeStmt(Jimple.v().newStaticInvokeExpr(toInvoke.makeRef(), args)));
@@ -957,8 +947,7 @@ public abstract class AbstractJimpleBody {
 
     // Loop over all parameters of reference type and create an assignment
     // statement to the appropriate "expression".
-    body.getParameterLocals()
-        .stream()
+    body.getParameterLocals().stream()
         .filter(
             l -> !isConstructorOuterClassParameterLocal(l) && l.getType() instanceof RefLikeType)
         .forEach(l -> storeToSet(l));
@@ -1102,9 +1091,7 @@ public abstract class AbstractJimpleBody {
    * @return
    */
   protected boolean readsArray() {
-    return originalBody
-        .getUnits()
-        .stream()
+    return originalBody.getUnits().stream()
         .filter(u -> u instanceof AssignStmt)
         .map(AssignStmt.class::cast)
         .filter(this::isArrayRead)
@@ -1128,9 +1115,7 @@ public abstract class AbstractJimpleBody {
    * @return
    */
   protected boolean writesArray() {
-    return originalBody
-        .getUnits()
-        .stream()
+    return originalBody.getUnits().stream()
         .filter(u -> u instanceof AssignStmt)
         .map(AssignStmt.class::cast)
         .filter(this::isArrayWrite)
@@ -1229,9 +1214,7 @@ public abstract class AbstractJimpleBody {
    * @return
    */
   protected List<SpecialInvokeExpr> getObjectCreations() {
-    return originalBody
-        .getUnits()
-        .stream()
+    return originalBody.getUnits().stream()
         .filter(u -> u instanceof InvokeStmt)
         .map(InvokeStmt.class::cast)
         .filter(s -> s.getInvokeExpr() instanceof SpecialInvokeExpr)
@@ -1245,9 +1228,7 @@ public abstract class AbstractJimpleBody {
    * @return
    */
   protected List<Type> getArrayCreations() {
-    return originalBody
-        .getUnits()
-        .stream()
+    return originalBody.getUnits().stream()
         .filter(u -> u instanceof AssignStmt)
         .map(AssignStmt.class::cast)
         .filter(

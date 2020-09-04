@@ -39,9 +39,7 @@ public class ClassWriter {
 
     File file = new File(SourceLocator.v().getFileNameFor(cls, Options.output_format_class));
     file.getParentFile().mkdirs();
-
-    try {
-      OutputStream streamOut = new FileOutputStream(file);
+    try (OutputStream streamOut = new FileOutputStream(file)) {
       BafASMBackend backend = new BafASMBackend(cls, Options.v().java_version());
       backend.generateClassFile(streamOut);
     } catch (IOException e) {

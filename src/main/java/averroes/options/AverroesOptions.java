@@ -276,8 +276,7 @@ public final class AverroesOptions {
    * @throws IOException
    */
   public static List<String> getDynamicLibraryClasses() throws IOException {
-    return getDynamicClasses()
-        .stream()
+    return getDynamicClasses().stream()
         .filter(AverroesOptions::isLibraryClass)
         .collect(Collectors.toList());
   }
@@ -289,8 +288,7 @@ public final class AverroesOptions {
    * @throws IOException
    */
   public static List<String> getDynamicApplicationClasses() throws IOException {
-    return getDynamicClasses()
-        .stream()
+    return getDynamicClasses().stream()
         .filter(AverroesOptions::isApplicationClass)
         .collect(Collectors.toList());
   }

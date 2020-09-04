@@ -99,15 +99,13 @@ public class RtaJimpleBody extends AbstractJimpleBody {
 
   @Override
   protected void handleFields() {
-    fieldReads
-        .stream()
+    fieldReads.stream()
         .forEach(
             f -> {
               storeToSet(loadField(f, true));
             });
 
-    fieldWrites
-        .stream()
+    fieldWrites.stream()
         .forEach(
             f -> {
               storeField(f, getCompatibleValue(f.type()));

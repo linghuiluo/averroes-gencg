@@ -71,6 +71,7 @@ public class CallGraphTest {
     List<SootMethod> entryPoints = new ArrayList<>();
     entryPoints.add(entryDoItAll);
     entryPoints.addAll(Scene.v().getEntryPoints());
+    for (SootMethod e : entryPoints) System.out.println(e.toString());
     Scene.v().setEntryPoints(entryPoints);
 
     PackManager.v().runPacks();
