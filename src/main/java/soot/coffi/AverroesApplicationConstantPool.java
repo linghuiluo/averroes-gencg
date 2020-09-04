@@ -338,7 +338,7 @@ public class AverroesApplicationConstantPool {
             method = searchMethod(klass, methodName, parameterTypes, returnType);
           }
           if (method != null) result.add(method);
-          else System.out.println("ooo" + s);
+          else System.out.println("AverroesApplicationConstantPool: sth wrong" + s);
         }
       }
     } catch (IOException e1) {

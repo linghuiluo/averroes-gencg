@@ -16,16 +16,12 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
@@ -37,13 +33,8 @@ import org.jf.dexlib2.iface.DexFile;
 import org.jf.dexlib2.iface.MultiDexContainer.DexEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import soot.G;
-import soot.Scene;
-import soot.SootClass;
-import soot.baf.BafASMBackend;
 import soot.dexpler.DexFileProvider;
 import soot.dexpler.DexFileProvider.DexContainer;
-import soot.options.Options;
 
 /**
  * Utility class to organize the input JAR files to Averroes into two JAR files only: one for the
@@ -176,92 +167,24 @@ public class ArchiveOrganizer {
    */
   private void processApk(String apk) {
     try {
-      initializeSootForAndroid(apk);
-      Set<SootClass> filteredClasses = new HashSet<SootClass>();
       File apkFile = new File(apk);
-      if (apkFile.getName().endsWith(".apk")) {
-        logger.info("Processing input apk: " + apkFile.getAbsolutePath());
-        List<DexContainer<? extends DexFile>> dexFiles =
-            DexFileProvider.v().getDexFromSource(apkFile);
-        for (DexContainer<? extends DexFile> dex : dexFiles) {
-          DexEntry<? extends DexFile> base = dex.getBase();
-          for (ClassDef c : base.getDexFile().getClasses()) {
-            String typeName = c.getType();
-            typeName = typeName.replace('/', '.');
-            String className = typeName.substring(1, typeName.length() - 1);
-            SootClass cls = null;
-            if (!Scene.v().containsClass(className)) {
-              // class not in Scene need to be forced to resolve
-              cls = Scene.v().forceResolve(className, SootClass.BODIES);
-            } else cls = Scene.v().getSootClass(className);
-            filteredClasses.add(cls);
-            addDexClass(className, true);
-          }
+
+      logger.info("Processing input apk: " + apkFile.getAbsolutePath());
+      List<DexContainer<? extends DexFile>> dexFiles =
+          DexFileProvider.v().getDexFromSource(apkFile);
+      for (DexContainer<? extends DexFile> dex : dexFiles) {
+        DexEntry<? extends DexFile> base = dex.getBase();
+        for (ClassDef c : base.getDexFile().getClasses()) {
+          String typeName = c.getType();
+          typeName = typeName.replace('/', '.');
+          String className = typeName.substring(1, typeName.length() - 1);
+          addDexClass(className, true);
         }
       }
-      writeOrganizedApplicationJarFile(filteredClasses);
     } catch (IOException e) {
       e.printStackTrace();
       System.exit(1);
     }
-  }
-
-  /**
-   * Write filteredClass into organized-app.jar with soot.
-   *
-   * @param filteredClasses
-   * @throws IOException
-   * @throws FileNotFoundException
-   */
-  private void writeOrganizedApplicationJarFile(Set<SootClass> filteredClasses)
-      throws FileNotFoundException, IOException {
-    OutputStream streamOut = null;
-    PrintWriter writerOut = null;
-    if (jarFile == null)
-      jarFile = new JarOutputStream(new FileOutputStream(Paths.organizedApplicationJarFile()));
-    for (SootClass c : filteredClasses) {
-
-      String fileName = c.getName().replace('.', File.separatorChar) + ".class";
-      // Fix path delimiters according to ZIP specification
-      fileName = fileName.replace("\\", "/");
-      JarEntry entry = new JarEntry(fileName);
-      entry.setMethod(ZipEntry.DEFLATED);
-      try {
-        jarFile.putNextEntry(entry);
-        logger.info("Writing " + c.getName() + " to " + fileName);
-        streamOut = jarFile;
-        writerOut = new PrintWriter(new OutputStreamWriter(streamOut));
-        int java_version = Options.java_version_1_8;
-        BafASMBackend bafBackend = new BafASMBackend(c, java_version);
-        bafBackend.generateClassFile(streamOut);
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    }
-    writerOut.flush();
-    writerOut.close();
-    try {
-      streamOut.close();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-  }
-
-  private void initializeSootForAndroid(String apk) {
-    G.reset();
-    Options.v().set_src_prec(Options.src_prec_apk);
-    Options.v().set_process_multiple_dex(true);
-    Options.v().set_ignore_resolution_errors(true);
-    Options.v().set_allow_phantom_refs(true);
-    Options.v().set_no_bodies_for_excluded(true);
-    String classPath = apk;
-    for (String lib : AverroesOptions.getLibraryClassPath()) {
-      classPath += File.pathSeparator + lib;
-    }
-    Options.v().set_android_jars(AverroesOptions.getLibraryClassPath().get(0));
-    Options.v().set_soot_classpath(classPath);
-    logger.info("Soot class path: " + Options.v().soot_classpath());
-    Scene.v().loadNecessaryClasses();
   }
 
   private void processExecutableJar(String fileName) {

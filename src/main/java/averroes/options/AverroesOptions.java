@@ -439,7 +439,6 @@ public final class AverroesOptions {
   }
 
   public static String getAndroidApk() {
-    assert (!isAndroidApk());
     return cmd.getOptionValue(applicationClassPath.getOpt());
   }
 

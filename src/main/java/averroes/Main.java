@@ -204,19 +204,21 @@ public class Main {
   }
 
   private static void initializeSootAndLoadClasses() throws IOException {
-    ClassFileProvider.prepare();
+    if (!AverroesOptions.isAndroidApk()) ClassFileProvider.prepare();
     // Add the organized archives for the application and its
     // dependencies.
     // Set some soot parameters
     G.reset();
+    String appPath = Paths.organizedApplicationJarFile().getAbsolutePath();
+    if (AverroesOptions.isAndroidApk()) {
+      appPath = AverroesOptions.getAndroidApk();
+      Options.v().set_src_prec(Options.src_prec_apk);
+      Options.v().set_process_multiple_dex(true);
+    }
     Options.v()
         .set_soot_classpath(
-            Paths.organizedApplicationJarFile()
-                + File.pathSeparator
-                + Paths.organizedLibraryJarFile());
-    Options.v()
-        .set_process_dir(
-            Collections.singletonList(Paths.organizedApplicationJarFile().getAbsolutePath()));
+            appPath + File.pathSeparator + Paths.organizedLibraryJarFile().toString());
+    Options.v().set_process_dir(Collections.singletonList(appPath));
     Options.v().set_allow_phantom_refs(true);
     Options.v().set_ignore_resolving_levels(true);
     // Load the necessary classes
