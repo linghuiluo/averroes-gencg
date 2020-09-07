@@ -169,7 +169,8 @@ public final class AverroesOptions {
           .addOption(outputDirectory)
           .addOption(jreDirectory)
           .addOption(help)
-          .addOption(enableGuards);
+          .addOption(enableGuards)
+          .addOption(configEntryPoints);
 
   private static CommandLine cmd;
 
