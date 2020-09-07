@@ -30,6 +30,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import probe.ObjectManager;
 import probe.ProbeClass;
+import soot.Scene;
 import soot.SootClass;
 
 /**
@@ -233,8 +234,12 @@ public final class AverroesOptions {
    * @return
    */
   public static List<String> getLibraryClassPath() {
-    return Arrays.asList(
-        cmd.getOptionValue(libraryClassPath.getOpt(), "").split(File.pathSeparator));
+    String libPath = cmd.getOptionValue(libraryClassPath.getOpt(), "");
+    if (isAndroidApk()) {
+      String path = Scene.v().getAndroidJarPath(libPath, getAndroidApk());
+      return Arrays.asList(path);
+    }
+    return Arrays.asList(libPath.split(File.pathSeparator));
   }
 
   /**

@@ -247,6 +247,7 @@ public class ArchiveOrganizer {
    * @param fromApplicationArchive
    */
   private void processArchive(String fileName, boolean fromApplicationArchive) {
+    logger.info("Processing file " + fileName);
     // Exit if the fileName is empty
     if (fileName.trim().length() <= 0) {
       return;
