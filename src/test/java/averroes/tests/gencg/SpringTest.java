@@ -1,11 +1,11 @@
 package averroes.tests.gencg;
 
 import averroes.Main;
-import org.junit.Test;
+import org.junit.Ignore;
 
 public class SpringTest {
 
-  @Test
+  @Ignore
   public void test() {
     String[] args = {
       "-f", "SPRING",

@@ -1,11 +1,11 @@
 package averroes.tests.gencg;
 
 import averroes.Main;
-import org.junit.Test;
+import org.junit.Ignore;
 
 public class AndroidTest {
 
-  @Test
+  @Ignore
   public void test() {
     String[] args = {
       "-f", "ANDROID",
