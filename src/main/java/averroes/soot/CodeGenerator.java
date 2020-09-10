@@ -187,8 +187,7 @@ public class CodeGenerator {
    * @return
    */
   public SootMethod getAverroesAbstractDoItAll() {
-    return averroesAbstractLibraryClass.getMethod(
-        Hierarchy.signatureToSubsignature(Names.AVERROES_ABSTRACT_DO_IT_ALL_METHOD_SIGNATURE));
+    return averroesAbstractLibraryClass.getMethodByName(Names.AVERROES_DO_IT_ALL_METHOD_NAME);
   }
 
   /**

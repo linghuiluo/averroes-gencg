@@ -13,6 +13,8 @@ import java.util.Set;
 import org.jf.dexlib2.dexbacked.DexBackedDexFile;
 import org.jf.dexlib2.dexbacked.raw.FieldIdItem;
 import org.jf.dexlib2.dexbacked.raw.MethodIdItem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import soot.ClassSource;
 import soot.ResolutionFailedException;
 import soot.Scene;
@@ -34,9 +36,8 @@ public class AverroesApplicationConstantPool {
   private Set<SootClass> applicationClasses;
   private Set<SootMethod> libraryMethods;
   private Set<SootField> libraryFields;
-
   private Hierarchy hierarchy;
-
+  private Logger logger = LoggerFactory.getLogger(getClass());
   /**
    * Initialize this constant pool with all the library methods and fields in the constant pool of
    * any application class.
@@ -334,11 +335,18 @@ public class AverroesApplicationConstantPool {
           SootMethod method = searchMethod(klass, methodName, parameterTypes, returnType);
           if (method == null && klass.getMethods().isEmpty()) {
             ClassSource cc = SourceLocator.v().getClassSource(className);
-            cc.resolve(klass);
-            method = searchMethod(klass, methodName, parameterTypes, returnType);
+            if (cc != null) {
+              cc.resolve(klass);
+              method = searchMethod(klass, methodName, parameterTypes, returnType);
+            }
           }
           if (method != null) result.add(method);
-          else System.out.println("AverroesApplicationConstantPool: sth wrong" + s);
+          else
+            logger.info(
+                "AverroesApplicationConstantPool: couldn't resolve method "
+                    + methodName
+                    + " in "
+                    + className);
         }
       }
     } catch (IOException e1) {
@@ -453,12 +461,14 @@ public class AverroesApplicationConstantPool {
         SootField field = searchField(klass, fieldName, fieldType);
         if (field == null && klass.getFields().isEmpty()) {
           ClassSource cc = SourceLocator.v().getClassSource(className);
-          cc.resolve(klass);
-          field = searchField(klass, fieldName, fieldType);
+          if (cc != null) {
+            cc.resolve(klass);
+            field = searchField(klass, fieldName, fieldType);
+          }
         }
         // If the resolved field is in the library, add it to the
         // result
-        if (hierarchy.isLibraryField(field)) {
+        if (field != null && hierarchy.isLibraryField(field)) {
           result.add(field);
         }
       }

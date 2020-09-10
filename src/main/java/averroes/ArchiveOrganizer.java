@@ -247,7 +247,7 @@ public class ArchiveOrganizer {
    * @param fromApplicationArchive
    */
   private void processArchive(String fileName, boolean fromApplicationArchive) {
- 
+
     // Exit if the fileName is empty
     if (fileName.trim().length() <= 0) {
       return;
@@ -255,10 +255,10 @@ public class ArchiveOrganizer {
 
     File file = new File(fileName);
     logger.info(
-            "Processing "
-                + (fromApplicationArchive ? "application" : "library")
-                + " archive: "
-                + file.getAbsolutePath());
+        "Processing "
+            + (fromApplicationArchive ? "application" : "library")
+            + " archive: "
+            + file.getAbsolutePath());
     if (file.getName().endsWith(".jar")) {
 
       try {
@@ -300,7 +300,7 @@ public class ArchiveOrganizer {
        * library classes are also in the rt.jar or deps.jar. In such a case, we want
        * to add the classes from the jar file first and ignore the repetition.
        */
-      logger.info("class " + className + " has already been added to this class provider.");
+      logger.debug("class " + className + " has already been added to this class provider.");
     } else {
       /*
        * The class has to be from an application archive & an application class. Some
