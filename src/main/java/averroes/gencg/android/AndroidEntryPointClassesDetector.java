@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import org.apache.commons.io.IOUtils;
@@ -35,11 +36,11 @@ public class AndroidEntryPointClassesDetector implements SubTypingEntryPointClas
 
   public List<SootClass> getEntryPointClasses() {
     List<SootClass> ret = getEntryPointClasses(classHierarchy, ANDROID_ENTRYPOINT_CLASSES);
-    //
-    // 	ret =
-    //        ret.stream()
-    //            .filter(c -> c.getPackageName().startsWith(packageName))
-    //            .collect(Collectors.toList());
+
+    ret =
+        ret.stream()
+            .filter(c -> !c.getPackageName().startsWith("android.support."))
+            .collect(Collectors.toList());
     for (SootClass androidClass : ret) {
       logger.info("Detected entry point class: " + androidClass.getName());
     }
