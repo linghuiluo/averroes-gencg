@@ -343,33 +343,37 @@ public class CodeGenerator {
                   .newAssignStmt(
                       localForClasses.get(klass), Jimple.v().newNewExpr(klass.getType())));
 
-      SootMethodRef constructorRef =
-          Scene.v()
-              .makeConstructorRef(
-                  klass, klass.getMethodByName(SootMethod.constructorName).getParameterTypes());
-      List<Value> args = new ArrayList<>();
+      for (SootMethod method : klass.getMethods()) {
+        if (method.getName().equals(SootMethod.constructorName)) {
+          SootMethod construtor = method;
+          SootMethodRef constructorRef =
+              Scene.v().makeConstructorRef(klass, construtor.getParameterTypes());
+          List<Value> args = new ArrayList<>();
 
-      for (Type p : constructorRef.getParameterTypes()) {
-        boolean added = false;
-        if (isInnerClass) {
-          if (outerClass != null && outerClass.getType().equals(p)) {
-            args.add(localForClasses.get(outerClass));
-            added = true;
+          for (Type p : constructorRef.getParameterTypes()) {
+            boolean added = false;
+            if (isInnerClass) {
+              if (outerClass != null && outerClass.getType().equals(p)) {
+                args.add(localForClasses.get(outerClass));
+                added = true;
+              }
+            }
+            if (!added)
+              if (isSimpleType(p.toString())) args.add(getSimpleDefaultValue(p));
+              else {
+
+                args.add(NullConstant.v());
+              }
           }
+          body.getUnits()
+              .add(
+                  Jimple.v()
+                      .newInvokeStmt(
+                          Jimple.v()
+                              .newSpecialInvokeExpr(
+                                  localForClasses.get(klass), constructorRef, args)));
         }
-        if (!added)
-          if (isSimpleType(p.toString())) args.add(getSimpleDefaultValue(p));
-          else {
-
-            args.add(NullConstant.v());
-          }
       }
-      body.getUnits()
-          .add(
-              Jimple.v()
-                  .newInvokeStmt(
-                      Jimple.v()
-                          .newSpecialInvokeExpr(localForClasses.get(klass), constructorRef, args)));
     }
     // Add return statement
     body.getUnits().addLast(Jimple.v().newReturnVoidStmt());
