@@ -70,6 +70,7 @@ import soot.jimple.InvokeExpr;
 import soot.jimple.Jimple;
 import soot.jimple.JimpleBody;
 import soot.jimple.LongConstant;
+import soot.jimple.NopStmt;
 import soot.jimple.NullConstant;
 import soot.jimple.StringConstant;
 import soot.jimple.toolkits.scalar.NopEliminator;
@@ -96,6 +97,7 @@ public class CodeGenerator {
   private SootClass averroesLibraryClass = null;
   private SootClass averroesAbstractLibraryClass = null;
   private AverroesJimpleBody doItAllBody = null;
+  private List<SootClass> entryPointClasses = null;
 
   /** Create a new code generator with the given class Cleanup.v(). */
   private CodeGenerator() {
@@ -290,7 +292,7 @@ public class CodeGenerator {
    * @param entryPointClasses
    * @throws IOException
    */
-  public void createDummyMainClass(List<SootClass> entryPointClasses) throws IOException {
+  public void createDummyMainClass() throws IOException {
     dummyMainClass = new SootClass(Names.DUMMYMAIN_CLASS, Modifier.PUBLIC);
     dummyMainClass.setSuperclass(Hierarchy.v().getJavaLangObject());
     Type type = ArrayType.v(RefType.v("java.lang.String"), 1);
@@ -722,37 +724,66 @@ public class CodeGenerator {
   }
 
   /**
+   * Test if c is entry point class type.
+   *
+   * @param c
+   * @return
+   */
+  private boolean isEntryPointSuperClass(SootClass c) {
+    boolean isEntryPointClass = false;
+    for (SootClass e : entryPointClasses) {
+      if (!c.getName().startsWith("java."))
+        isEntryPointClass = Hierarchy.v().isConcreteSubclassOf(e, c);
+      if (isEntryPointClass) {
+        return true;
+      }
+    }
+    return isEntryPointClass;
+  }
+
+  /**
    * Call the application methods that the library could call, i.e. callbacks, calls via reflection.
    */
   private void callApplicationMethods() {
-    for (SootMethod toCall : getAllMethodsToCallReflectively()) {
-      SootClass cls = toCall.getDeclaringClass();
-      // SootClass cls = Cleanup.v().getClass(toCall.getSignature());
-      SootMethodRef methodRef = toCall.makeRef();
+    Map<SootClass, Set<SootMethod>> allMethodsToCall = getAllMethodsToCallReflectively();
+    for (SootClass c : allMethodsToCall.keySet()) {
+      boolean addGuard = false;
+      addGuard = isEntryPointSuperClass(c);
+      NopStmt outerLoopStartStmt = null;
+      // if the class is an entryp point class type such as an Activity, add a loop
+      if (addGuard) outerLoopStartStmt = doItAllBody.insertOuterLoopStartStmt();
+      for (SootMethod toCall : allMethodsToCall.get(c)) {
+        SootClass cls = toCall.getDeclaringClass();
+        // SootClass cls = Cleanup.v().getClass(toCall.getSignature());
+        SootMethodRef methodRef = toCall.makeRef();
 
-      // Prepare the method base, and actual args
-      Local base = (Local) doItAllBody.getCompatibleValue(cls.getType());
-      List<Value> args = doItAllBody.prepareActualArguments(toCall);
-      InvokeExpr invokeExpr;
+        // Prepare the method base, and actual args
+        Local base = (Local) doItAllBody.getCompatibleValue(cls.getType());
+        List<Value> args = doItAllBody.prepareActualArguments(toCall);
+        InvokeExpr invokeExpr;
 
-      // Call the method
-      if (cls.isInterface()) {
-        invokeExpr = Jimple.v().newInterfaceInvokeExpr(base, methodRef, args);
-      } else if (toCall.isStatic()) {
-        invokeExpr = Jimple.v().newStaticInvokeExpr(methodRef, args);
-      } else {
-        invokeExpr = Jimple.v().newVirtualInvokeExpr(base, methodRef, args);
+        // Call the method
+        if (cls.isInterface()) {
+          invokeExpr = Jimple.v().newInterfaceInvokeExpr(base, methodRef, args);
+        } else if (toCall.isStatic()) {
+          invokeExpr = Jimple.v().newStaticInvokeExpr(methodRef, args);
+        } else {
+          invokeExpr = Jimple.v().newVirtualInvokeExpr(base, methodRef, args);
+        }
+
+        // Assign the return of the call to the return variable only if it
+        // holds an object.
+        // If not, then just call the method.
+        if (toCall.getReturnType() instanceof RefLikeType) {
+          Local ret = doItAllBody.newLocal(toCall.getReturnType());
+          doItAllBody.getInvokeReturnVariables().add(ret);
+          doItAllBody.insertAssignmentStatement(ret, invokeExpr, addGuard);
+        } else {
+          doItAllBody.insertInvokeStatement(invokeExpr, addGuard);
+        }
       }
-
-      // Assign the return of the call to the return variable only if it
-      // holds an object.
-      // If not, then just call the method.
-      if (toCall.getReturnType() instanceof RefLikeType) {
-        Local ret = doItAllBody.newLocal(toCall.getReturnType());
-        doItAllBody.getInvokeReturnVariables().add(ret);
-        doItAllBody.insertAssignmentStatement(ret, invokeExpr);
-      } else {
-        doItAllBody.insertInvokeStatement(invokeExpr);
+      if (addGuard) {
+        doItAllBody.finishLoop(outerLoopStartStmt);
       }
     }
 
@@ -768,7 +799,7 @@ public class CodeGenerator {
    *
    * @return
    */
-  public Set<SootMethod> getAllMethodsToCallReflectively() {
+  public Map<SootClass, Set<SootMethod>> getAllMethodsToCallReflectively() {
     LinkedHashSet<SootMethod> result = new LinkedHashSet<SootMethod>();
     result.addAll(Hierarchy.v().getLibrarySuperMethodsOfApplicationMethods());
     result.addAll(getTamiFlexApplicationMethodInvokes());
@@ -779,7 +810,13 @@ public class CodeGenerator {
     // result.addAll(Cleanup.v().getOnClickApplicationMethods());
     // }
 
-    return result;
+    Map<SootClass, Set<SootMethod>> ret = new HashMap<>();
+    for (SootMethod m : result) {
+      SootClass c = m.getDeclaringClass();
+      if (!ret.containsKey(c)) ret.put(c, new HashSet<>());
+      ret.get(c).add(m);
+    }
+    return ret;
   }
 
   /** Handle possible array writes in the library. */
@@ -789,7 +826,7 @@ public class CodeGenerator {
             doItAllBody.getCompatibleValue(
                 ArrayType.v(Hierarchy.v().getJavaLangObject().getType(), 1));
     doItAllBody.insertAssignmentStatement(
-        Jimple.v().newArrayRef(objectArray, IntConstant.v(0)), doItAllBody.getLpt());
+        Jimple.v().newArrayRef(objectArray, IntConstant.v(0)), doItAllBody.getLpt(), false);
   }
 
   /** Create objects for application classes if the library knows their name constants. */
@@ -1199,7 +1236,7 @@ public class CodeGenerator {
    */
   public void createCraftedInterfacesOfEntryPointClasses(
       List<SootClass> entryPointClasses, EntryPointConfigurationReader reader) throws IOException {
-
+    this.entryPointClasses = entryPointClasses;
     AnnotationEntryPointMethodDetector mdetector = null;
     switch (AverroesOptions.getFrameworkType()) {
       case FrameworkType.SPRING:

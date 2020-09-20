@@ -36,7 +36,6 @@ public class AndroidEntryPointClassesDetector implements SubTypingEntryPointClas
 
   public List<SootClass> getEntryPointClasses() {
     List<SootClass> ret = getEntryPointClasses(classHierarchy, ANDROID_ENTRYPOINT_CLASSES);
-
     ret =
         ret.stream()
             .filter(c -> !c.getPackageName().startsWith("android.support."))

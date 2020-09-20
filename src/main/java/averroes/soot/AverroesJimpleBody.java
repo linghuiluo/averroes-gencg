@@ -33,6 +33,7 @@ import soot.SootClass;
 import soot.SootField;
 import soot.SootMethod;
 import soot.Type;
+import soot.Unit;
 import soot.Value;
 import soot.VoidType;
 import soot.jimple.AbstractStmtSwitch;
@@ -42,6 +43,7 @@ import soot.jimple.CastExpr;
 import soot.jimple.DoubleConstant;
 import soot.jimple.EqExpr;
 import soot.jimple.FloatConstant;
+import soot.jimple.IfStmt;
 import soot.jimple.IntConstant;
 import soot.jimple.InvokeExpr;
 import soot.jimple.InvokeStmt;
@@ -777,8 +779,10 @@ public class AverroesJimpleBody {
    *
    * @param invokeExpression
    */
-  public void insertInvokeStatement(InvokeExpr invokeExpression) {
-    insertStmt(Jimple.v().newInvokeStmt(invokeExpression));
+  public void insertInvokeStatement(InvokeExpr invokeExpression, boolean addGuard) {
+    Stmt stmt = Jimple.v().newInvokeStmt(invokeExpression);
+    if (addGuard) insertAndGuardStmt(stmt);
+    else insertStmt(stmt);
   }
 
   /**
@@ -787,8 +791,10 @@ public class AverroesJimpleBody {
    * @param variable
    * @param rvalue
    */
-  public void insertAssignmentStatement(Value variable, Value rvalue) {
-    insertStmt(Jimple.v().newAssignStmt(variable, rvalue));
+  public void insertAssignmentStatement(Value variable, Value rvalue, boolean addGuard) {
+    Stmt stmt = Jimple.v().newAssignStmt(variable, rvalue);
+    if (addGuard) insertAndGuardStmt(stmt);
+    else insertStmt(stmt);
   }
 
   /**
@@ -984,5 +990,25 @@ public class AverroesJimpleBody {
     }
 
     return result;
+  }
+
+  public NopStmt insertOuterLoopStartStmt() {
+    NopStmt outerStartStmt = Jimple.v().newNopStmt();
+    body.getUnits().add(outerStartStmt);
+    return outerStartStmt;
+  }
+  /**
+   * Creates an opaque predicate that jumps to the given target
+   *
+   * @param target The target to which the opaque predicate shall jump
+   */
+  public void finishLoop(Unit target) {
+    if (target == null) {
+      return;
+    }
+    final Jimple jimple = Jimple.v();
+    EqExpr cond = Jimple.v().newEqExpr(getGuard(), IntConstant.v(0));
+    IfStmt ifStmt = jimple.newIfStmt(cond, target);
+    body.getUnits().add(ifStmt);
   }
 }
