@@ -59,6 +59,8 @@ public class Main {
 
       organizeInput();
 
+      if (AverroesOptions.noInstrumetation()) return;
+
       TimeUtils.reset();
 
       initializeSootAndLoadClasses();
@@ -101,9 +103,9 @@ public class Main {
 
   private static void addGeneratedClassesToJars() throws IOException, URISyntaxException {
     // Create the jar file and add all the generated class files to it.;
-    JarFile organizedAppJarFile = new JarFile(Paths.organizedApplicationJarFile());
-    organizedAppJarFile.addGeneratedClassFilesToJar(
-        Paths.applicationClassesOutputDirectory(), Paths.organizedApplicationJarFile());
+    JarFile instrumentedAppJarFile = new JarFile(Paths.instrumentedApplicationJarFile());
+    instrumentedAppJarFile.addGeneratedClassFilesToJar(
+        Paths.applicationClassesOutputDirectory(), Paths.instrumentedApplicationJarFile());
     JarFile librJarFile = new JarFile(Paths.placeholderLibraryJarFile());
     librJarFile.addGeneratedClassFilesToJar(
         Paths.libraryClassesOutputDirectory(), Paths.placeholderLibraryJarFile());

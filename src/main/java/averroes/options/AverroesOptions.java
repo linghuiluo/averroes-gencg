@@ -157,6 +157,14 @@ public final class AverroesOptions {
           .required(false)
           .build();
 
+  private static Option noInstrumentation =
+      Option.builder("ni")
+          .longOpt("no-inst")
+          .desc("setting this flag will make averroes not to perform instrumentation.")
+          .hasArg(false)
+          .required(false)
+          .build();
+
   private static Options options =
       new Options()
           .addOption(applicationRegex)
@@ -170,7 +178,8 @@ public final class AverroesOptions {
           .addOption(jreDirectory)
           .addOption(help)
           .addOption(enableGuards)
-          .addOption(configEntryPoints);
+          .addOption(configEntryPoints)
+          .addOption(noInstrumentation);
 
   private static CommandLine cmd;
 
@@ -460,5 +469,9 @@ public final class AverroesOptions {
     if (cmd.hasOption(configEntryPoints.getOpt()))
       config = cmd.getOptionValue(configEntryPoints.getOpt());
     return config + File.separator + "EntryPointMethods.txt";
+  }
+
+  public static boolean noInstrumetation() {
+    return cmd.hasOption(noInstrumentation.getOpt());
   }
 }

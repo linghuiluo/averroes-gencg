@@ -274,7 +274,7 @@ public class ArchiveOrganizer {
         archive.close();
       } catch (IOException e) {
         e.printStackTrace();
-        System.exit(1);
+        logger.info("Couldn't process " + file.getAbsolutePath());
       }
     }
   }

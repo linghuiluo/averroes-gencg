@@ -171,6 +171,14 @@ public class Paths {
   }
 
   /**
+   * The path to the instrumented application Jar file.
+   *
+   * @return
+   */
+  public static File instrumentedApplicationJarFile() {
+    return new File(AverroesOptions.getOutputDirectory(), "instrumented-app.jar");
+  }
+  /**
    * The path to the android apk file.
    *
    * @return
