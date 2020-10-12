@@ -29,6 +29,7 @@ import soot.LongType;
 import soot.PrimType;
 import soot.RefLikeType;
 import soot.RefType;
+import soot.Scene;
 import soot.SootClass;
 import soot.SootField;
 import soot.SootMethod;
@@ -861,7 +862,7 @@ public class AverroesJimpleBody {
    *
    * @param cls
    */
-  public void createObjectOfType(SootClass cls) {
+  public Local createObjectOfType(SootClass cls) {
     SootMethod init;
 
     if (Hierarchy.hasDefaultConstructor(cls)) {
@@ -870,7 +871,7 @@ public class AverroesJimpleBody {
       init = Hierarchy.getAnyPublicConstructor(cls);
     }
 
-    createObjectByCallingConstructor(init);
+    return createObjectByCallingConstructor(init);
   }
 
   /**
@@ -890,10 +891,11 @@ public class AverroesJimpleBody {
    *
    * @param init
    */
-  public void createObjectByCallingConstructor(SootMethod init) {
+  public Local createObjectByCallingConstructor(SootMethod init) {
     if (init != null && init.getName().equals(SootMethod.constructorName)) {
-      createObjectByMethod(init);
+      return createObjectByMethod(init);
     }
+    return null;
   }
 
   /**
@@ -993,6 +995,7 @@ public class AverroesJimpleBody {
   }
 
   public NopStmt insertOuterLoopStartStmt() {
+    insertRandomAssignment(getGuard());
     NopStmt outerStartStmt = Jimple.v().newNopStmt();
     body.getUnits().add(outerStartStmt);
     return outerStartStmt;
@@ -1006,9 +1009,25 @@ public class AverroesJimpleBody {
     if (target == null) {
       return;
     }
-    final Jimple jimple = Jimple.v();
-    EqExpr cond = Jimple.v().newEqExpr(getGuard(), IntConstant.v(0));
+    Jimple jimple = Jimple.v();
+    EqExpr cond = jimple.newEqExpr(getGuard(), IntConstant.v(0));
     IfStmt ifStmt = jimple.newIfStmt(cond, target);
     body.getUnits().add(ifStmt);
+  }
+
+  /**
+   * Assign a local variable to random generated integer number.
+   *
+   * @param local
+   */
+  public void insertRandomAssignment(Local var) {
+    Jimple jimple = Jimple.v();
+    SootClass randomClass = Scene.v().getSootClass("java.util.Random");
+    Local local = createObjectOfType(randomClass);
+    // FIXME: Random class doesn't have the expected method nextInt.
+    InvokeExpr invoke =
+        jimple.newVirtualInvokeExpr(
+            local, randomClass.getMethod("nextInt", new ArrayList<>()).makeRef());
+    insertAssignmentStatement(var, invoke, false);
   }
 }

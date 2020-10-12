@@ -254,7 +254,7 @@ public class ArchiveOrganizer {
     }
 
     File file = new File(fileName);
-    logger.info(
+    logger.debug(
         "Processing "
             + (fromApplicationArchive ? "application" : "library")
             + " archive: "

@@ -223,6 +223,7 @@ public class Main {
     Options.v().set_process_dir(Collections.singletonList(appPath));
     Options.v().set_allow_phantom_refs(true);
     Options.v().set_ignore_resolving_levels(true);
+    Options.v().set_output_format(Options.output_format_jimple);
     // Load the necessary classes
     logger.info("");
     logger.info("Soot is Loading classes...");

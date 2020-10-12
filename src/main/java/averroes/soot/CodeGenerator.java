@@ -473,13 +473,6 @@ public class CodeGenerator {
     // Validate the Jimple body
     body.validate();
 
-    // TODO
-    // if
-    // (method.getDeclaringClass().equals(Scene.v().getSootClass("java.lang.Throwable")))
-    // {
-    // System.out.println(body.getJimpleBody());
-    // }
-
     return (JimpleBody) method.getActiveBody();
   }
 
@@ -709,9 +702,6 @@ public class CodeGenerator {
     // Eliminate Nops
     NopEliminator.v().transform(doItAllBody.getJimpleBody());
 
-    // TODO
-    // System.out.println(doItAllBody.getJimpleBody());
-
     // Finally validate the Jimple body
     doItAllBody.validate();
   }
@@ -732,6 +722,7 @@ public class CodeGenerator {
   private boolean isEntryPointSuperClass(SootClass c) {
     boolean isEntryPointClass = false;
     for (SootClass e : entryPointClasses) {
+      // FIXME. Spring entry point class always returns false
       if (!c.getName().startsWith("java."))
         isEntryPointClass = Hierarchy.v().isConcreteSubclassOf(e, c);
       if (isEntryPointClass) {
@@ -751,7 +742,9 @@ public class CodeGenerator {
       addGuard = isEntryPointSuperClass(c);
       NopStmt outerLoopStartStmt = null;
       // if the class is an entryp point class type such as an Activity, add a loop
-      if (addGuard) outerLoopStartStmt = doItAllBody.insertOuterLoopStartStmt();
+      if (addGuard) {
+        outerLoopStartStmt = doItAllBody.insertOuterLoopStartStmt();
+      }
       for (SootMethod toCall : allMethodsToCall.get(c)) {
         SootClass cls = toCall.getDeclaringClass();
         // SootClass cls = Cleanup.v().getClass(toCall.getSignature());
@@ -1277,6 +1270,6 @@ public class CodeGenerator {
         break;
       }
     }
-    units.remove(toRemove);
+    if (toRemove != null) units.remove(toRemove);
   }
 }

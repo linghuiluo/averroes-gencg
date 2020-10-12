@@ -14,5 +14,11 @@ com.google.android.gms.gcm.GcmListenerService _ANDROID_
 org.springframework.stereotype.Service _SPRING_
 org.springframework.stereotype.Controller _SPRING_
 org.springframework.stereotype.Component _SPRING_
+org.springframework.stereotype.Repository _SPRING_
+org.springframework.web.bind.annotation.RestController _SPRING_
+org.springframework.web.servlet.handler.HandlerInterceptorAdapter _SPRING_
+org.springframework.web.servlet.HandlerInterceptor _SPRING_
+
+
 
 

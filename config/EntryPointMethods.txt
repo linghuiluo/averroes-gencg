@@ -1,3 +1,12 @@
 org.springframework.web.bind.annotation.GetMapping _SPRING_
 org.springframework.web.bind.annotation.PostMapping _SPRING_
+org.springframework.web.bind.annotation.DeleteMapping _SPRING_
+org.springframework.web.bind.annotation.ExceptionHandler _SPRING_
+org.springframework.web.bind.annotation.InitBinder _SPRING_
+org.springframework.web.bind.annotation.PatchMapping _SPRING_
 org.springframework.web.bind.annotation.PostMapping _SPRING_
+org.springframework.web.bind.annotation.PutMapping _SPRING_
+org.springframework.web.bind.annotation.RequestMapping _SPRING_
+
+
+
