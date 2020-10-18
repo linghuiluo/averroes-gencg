@@ -217,9 +217,15 @@ public class Main {
       Options.v().set_src_prec(Options.src_prec_apk);
       Options.v().set_process_multiple_dex(true);
     }
+    String rtJar =
+        System.getProperty("java.home") + File.separator + "lib" + File.separator + "rt.jar";
     Options.v()
         .set_soot_classpath(
-            appPath + File.pathSeparator + Paths.organizedLibraryJarFile().toString());
+            appPath
+                + File.pathSeparator
+                + Paths.organizedLibraryJarFile().toString()
+                + File.pathSeparator
+                + rtJar);
     Options.v().set_process_dir(Collections.singletonList(appPath));
     Options.v().set_allow_phantom_refs(true);
     Options.v().set_ignore_resolving_levels(true);
