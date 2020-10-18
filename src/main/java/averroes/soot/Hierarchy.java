@@ -486,6 +486,7 @@ public class Hierarchy {
    */
   public void cleanupLibraryClasses() {
     for (SootClass libraryClass : libraryClasses) {
+      if (libraryClass.getName().equals("java.lang.System")) continue;
       addDefaultConstructorToLibraryClass(libraryClass);
       cleanupLibraryClassTags(libraryClass);
       cleanupMethodsInLibraryClass(libraryClass);
