@@ -767,6 +767,7 @@ public class CodeGenerator {
         // Assign the return of the call to the return variable only if it
         // holds an object.
         // If not, then just call the method.
+        if (addGuard) doItAllBody.insertRandomAssignment();
         if (toCall.getReturnType() instanceof RefLikeType) {
           Local ret = doItAllBody.newLocal(toCall.getReturnType());
           doItAllBody.getInvokeReturnVariables().add(ret);

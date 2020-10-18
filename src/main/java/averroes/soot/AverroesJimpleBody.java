@@ -41,6 +41,7 @@ import soot.jimple.AbstractStmtSwitch;
 import soot.jimple.AnyNewExpr;
 import soot.jimple.AssignStmt;
 import soot.jimple.CastExpr;
+import soot.jimple.CmpExpr;
 import soot.jimple.DoubleConstant;
 import soot.jimple.EqExpr;
 import soot.jimple.FloatConstant;
@@ -521,9 +522,11 @@ public class AverroesJimpleBody {
             if (stmt.getRightOp() instanceof CastExpr) {
               body.getUnits().add(stmt);
             } else if (isNewArrayExpression(stmt.getRightOp())) {
-              insertAndGuardStmt(stmt, stmt.getLeftOp());
+              if (!AverroesOptions.isEnableGuards()) body.getUnits().add(stmt);
+              else insertAndGuardStmt(stmt, stmt.getLeftOp());
             } else {
-              insertAndGuardStmt(stmt);
+              if (!AverroesOptions.isEnableGuards()) body.getUnits().add(stmt);
+              else insertAndGuardStmt(stmt);
             }
           }
 
@@ -793,6 +796,7 @@ public class AverroesJimpleBody {
    * @param rvalue
    */
   public void insertAssignmentStatement(Value variable, Value rvalue, boolean addGuard) {
+    if (addGuard) insertRandomAssignment();
     Stmt stmt = Jimple.v().newAssignStmt(variable, rvalue);
     if (addGuard) insertAndGuardStmt(stmt);
     else insertStmt(stmt);
@@ -995,7 +999,7 @@ public class AverroesJimpleBody {
   }
 
   public NopStmt insertOuterLoopStartStmt() {
-    insertRandomAssignment(getGuard());
+    insertRandomAssignment();
     NopStmt outerStartStmt = Jimple.v().newNopStmt();
     body.getUnits().add(outerStartStmt);
     return outerStartStmt;
@@ -1016,18 +1020,19 @@ public class AverroesJimpleBody {
   }
 
   /**
-   * Assign a local variable to random generated integer number.
+   * insert an assignment which has undecidable value.
    *
    * @param local
    */
-  public void insertRandomAssignment(Local var) {
-    Jimple jimple = Jimple.v();
-    SootClass randomClass = Scene.v().getSootClass("java.util.Random");
-    Local local = createObjectOfType(randomClass);
-    // FIXME: Random class doesn't have the expected method nextInt.
+  public void insertRandomAssignment() {
+    SootClass randomClass = Scene.v().getSootClass("java.lang.System");
     InvokeExpr invoke =
-        jimple.newVirtualInvokeExpr(
-            local, randomClass.getMethod("nextInt", new ArrayList<>()).makeRef());
-    insertAssignmentStatement(var, invoke, false);
+        Jimple.v()
+            .newStaticInvokeExpr(
+                randomClass.getMethod("currentTimeMillis", new ArrayList<>()).makeRef());
+    Local local = this.newLocal(LongType.v());
+    insertAssignmentStatement(local, invoke, false);
+    CmpExpr compare = Jimple.v().newCmpExpr(local, LongConstant.v(1000));
+    insertAssignmentStatement(getGuard(), compare, false);
   }
 }
