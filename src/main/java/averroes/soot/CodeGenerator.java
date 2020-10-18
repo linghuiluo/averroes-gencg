@@ -356,8 +356,10 @@ public class CodeGenerator {
             boolean added = false;
             if (isInnerClass) {
               if (outerClass != null && outerClass.getType().equals(p)) {
-                args.add(localForClasses.get(outerClass));
-                added = true;
+                if (localForClasses.containsKey(outerClass)) {
+                  args.add(localForClasses.get(outerClass));
+                  added = true;
+                }
               }
             }
             if (!added)

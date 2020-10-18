@@ -1025,7 +1025,7 @@ public class AverroesJimpleBody {
    * @param local
    */
   public void insertRandomAssignment() {
-    SootClass randomClass = Scene.v().getSootClass("java.lang.System");
+    SootClass randomClass = Scene.v().forceResolve("java.lang.System", SootClass.BODIES);
     InvokeExpr invoke =
         Jimple.v()
             .newStaticInvokeExpr(

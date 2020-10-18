@@ -217,6 +217,7 @@ public class Main {
       Options.v().set_src_prec(Options.src_prec_apk);
       Options.v().set_process_multiple_dex(true);
     }
+
     String rtJar =
         System.getProperty("java.home") + File.separator + "lib" + File.separator + "rt.jar";
     Options.v()
@@ -234,6 +235,7 @@ public class Main {
     logger.info("");
     logger.info("Soot is Loading classes...");
     logger.info("Soot class path " + Options.v().soot_classpath());
+    Scene.v().addBasicClass("java.lang.System", SootClass.BODIES);
     Scene.v()
         .loadNecessaryClasses(); // the classes are resolved at signature level, fields, and method
     // signatures are resolved.
