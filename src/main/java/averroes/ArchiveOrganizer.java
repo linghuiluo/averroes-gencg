@@ -149,6 +149,7 @@ public class ArchiveOrganizer {
    * @param dir
    */
   private void processJreArchives(String dir) {
+	logger.info("Process JRE "+dir);
     File directory = new File(dir);
     org.apache.commons.io.filefilter.IOFileFilter nameFilter =
         FileFilterUtils.or(
