@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.slf4j.LoggerFactory;
 import soot.ArrayType;
+import soot.DoubleType;
 import soot.FloatType;
 import soot.IntegerType;
 import soot.Local;
@@ -1025,14 +1026,15 @@ public class AverroesJimpleBody {
    * @param local
    */
   public void insertRandomAssignment() {
-    SootClass randomClass = Scene.v().forceResolve("java.lang.System", SootClass.BODIES);
+    SootClass randomClass = Scene.v().forceResolve("java.lang.Math", SootClass.BODIES);
+    
     InvokeExpr invoke =
         Jimple.v()
             .newStaticInvokeExpr(
-                randomClass.getMethod("currentTimeMillis", new ArrayList<>()).makeRef());
-    Local local = this.newLocal(LongType.v());
+                randomClass.getMethod("random", new ArrayList<>()).makeRef());
+    Local local = this.newLocal(DoubleType.v());
     insertAssignmentStatement(local, invoke, false);
-    CmpExpr compare = Jimple.v().newCmpExpr(local, LongConstant.v(1000));
+    CmpExpr compare = Jimple.v().newCmpExpr(local, DoubleConstant.v(0.5));
     insertAssignmentStatement(getGuard(), compare, false);
   }
 }
