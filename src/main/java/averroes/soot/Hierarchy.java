@@ -486,8 +486,7 @@ public class Hierarchy {
    */
   public void cleanupLibraryClasses() {
     for (SootClass libraryClass : libraryClasses) {
-      if (libraryClass.getName().equals("java.lang.System")
-          || libraryClass.getName().equals("java.lang.Runnable")) continue;
+      if (NonFilterClasses.isNonFilterClass(libraryClass.getName())) continue;
       addDefaultConstructorToLibraryClass(libraryClass);
       cleanupLibraryClassTags(libraryClass);
       cleanupMethodsInLibraryClass(libraryClass);
@@ -1805,8 +1804,11 @@ public class Hierarchy {
    * @param libraryClass
    */
   private void cleanupMethodsInLibraryClass(SootClass libraryClass) {
+	for(SootClass c: getSubclassesOf(libraryClass)){
+		if(applicationClasses.contains(c))// if the library class is extended, we don't remove its method.
+			return;
+	}
     Set<SootMethod> toRemove = new HashSet<SootMethod>();
-
     for (SootMethod method : libraryClass.getMethods()) {
       if (isLibraryMethodRemovable(method)) {
         toRemove.add(method);
