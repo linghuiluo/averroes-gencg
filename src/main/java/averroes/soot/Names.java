@@ -10,6 +10,9 @@
 package averroes.soot;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+import soot.RefLikeType;
 import soot.SootMethod;
 
 public class Names {
@@ -92,4 +95,17 @@ public class Names {
 
   // Other
   public static final String BLOB = "blob";
+
+  // the following code generate name for typed LibraryPointsTo field.
+  private static int ID = 0;
+  private static Map<RefLikeType, String> typedLibraryPointsToNames = new HashMap<>();
+
+  public static String getTypedLibraryPointsToName(RefLikeType fieldType) {
+    if (typedLibraryPointsToNames.containsKey(fieldType))
+      return typedLibraryPointsToNames.get(fieldType);
+    ID++;
+    String name = "LPT_" + ID;
+    typedLibraryPointsToNames.put(fieldType, name);
+    return name;
+  }
 }

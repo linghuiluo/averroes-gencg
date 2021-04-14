@@ -25,7 +25,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collections;
-import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipException;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -135,14 +135,14 @@ public class Main {
         default:
           return;
       }
-      List<SootClass> entryPointClasses = cdetector.getEntryPointClasses();
+      Map<SootClass, SootClass> entryPointClasses = cdetector.getEntryPointClasses();
       CodeGenerator.v().createCraftedInterfacesOfEntryPointClasses(entryPointClasses, reader);
 
       for (SootClass c : Hierarchy.v().getApplicationClasses())
         CodeGenerator.v().writeClassFile(Paths.applicationClassesOutputDirectory().getPath(), c);
 
-      CodeGenerator.v().createDummyMainClass();
-      logger.info("Generated DummyMainClass");
+      // CodeGenerator.v().createDummyMainClass();
+      // logger.info("Generated DummyMainClass");
 
       // Create the Averroes library class
       logger.info("");
@@ -152,6 +152,11 @@ public class Main {
       // Create method bodies to the library classes
       logger.info("Generating the method bodies for the placeholder library classes ...");
       CodeGenerator.v().createLibraryMethodBodies();
+
+      // Rewrite the Averroes library class
+      CodeGenerator.writeClassFile(
+          Paths.libraryClassesOutputDirectory().getPath(),
+          CodeGenerator.v().getAverroesAbstractLibraryClass());
 
       // Create empty classes for the basic classes required internally by
       // Soot

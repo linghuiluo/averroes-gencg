@@ -2,7 +2,7 @@ package averroes.gencg.android;
 
 import averroes.FrameworkType;
 import averroes.soot.Hierarchy;
-import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,9 +20,10 @@ public class SpringEntryPointClassesDetector implements AnnotationEntryPointClas
   }
 
   @Override
-  public List<SootClass> getEntryPointClasses() {
-    List<SootClass> epClasses = getEntryPointClasses(classHierarchy, SPRING_ENTRYPOINT_CLASSES);
-    for (SootClass c : epClasses) {
+  public Map<SootClass, SootClass> getEntryPointClasses() {
+    Map<SootClass, SootClass> epClasses =
+        getEntryPointClasses(classHierarchy, SPRING_ENTRYPOINT_CLASSES);
+    for (SootClass c : epClasses.keySet()) {
       logger.info("Detected entry point class: " + c.getName());
     }
     return epClasses;

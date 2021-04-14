@@ -11,9 +11,11 @@ package averroes.soot;
 
 import averroes.frameworks.options.FrameworksOptions;
 import averroes.options.AverroesOptions;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -22,6 +24,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.slf4j.LoggerFactory;
 import soot.ArrayType;
+import soot.BooleanType;
 import soot.DoubleType;
 import soot.FloatType;
 import soot.IntegerType;
@@ -47,6 +50,7 @@ import soot.jimple.DoubleConstant;
 import soot.jimple.EqExpr;
 import soot.jimple.FloatConstant;
 import soot.jimple.IfStmt;
+import soot.jimple.InstanceFieldRef;
 import soot.jimple.IntConstant;
 import soot.jimple.InvokeExpr;
 import soot.jimple.InvokeStmt;
@@ -58,6 +62,7 @@ import soot.jimple.ReturnStmt;
 import soot.jimple.SpecialInvokeExpr;
 import soot.jimple.Stmt;
 import soot.jimple.ThrowStmt;
+import soot.util.Chain;
 
 /**
  * A representation of the {@link JimpleBody} Averroes generates for all the placeholder library
@@ -193,10 +198,44 @@ public class AverroesJimpleBody {
    * @param originalBody
    */
   private void assignActualParametersToLpt() {
-    List<Local> params = getRefLikeParameterLocals();
-    for (Local param : params) {
-      storeLibraryPointsToField(param);
+    Map<Local, RefLikeType> params = getRefLikeParameterLocalAndTypes();
+    for (Local param : params.keySet()) {
+      storeTypedLibraryPointsToField(param, params.get(param));
     }
+  }
+
+  public void assignParametersToReturnValuesField() {
+    Map<Local, RefLikeType> params = getRefLikeParameterLocalAndTypes();
+    SootMethod method = body.getMethod();
+    Type retType = method.getReturnType();
+    if (retType instanceof RefLikeType && params.size() > 0) {
+      SootClass retClass = Scene.v().getSootClassUnsafe(retType.toString());
+      Chain<SootField> fields = retClass.getFields();
+      for (Local para : params.keySet()) {
+        Type paraType = params.get(para);
+        Set<SootField> matchedFields = getInstanceFieldsWithType(fields, paraType);
+        if (!matchedFields.isEmpty()) {
+          Local tmp = newLocal(retType);
+          SootField lptField =
+              CodeGenerator.v().createAverroesTypedLibraryPointsToField((RefLikeType) retType);
+          InstanceFieldRef lpt = Jimple.v().newInstanceFieldRef(getInstance(), lptField.makeRef());
+          insertStmt(Jimple.v().newAssignStmt(tmp, lpt));
+          for (SootField f : matchedFields) {
+            InstanceFieldRef ref = Jimple.v().newInstanceFieldRef(tmp, f.makeRef());
+            insertStmt(Jimple.v().newAssignStmt(ref, para));
+          }
+          storeTypedLibraryPointsToField(tmp, (RefLikeType) retType);
+        }
+      }
+    }
+  }
+
+  private Set<SootField> getInstanceFieldsWithType(Chain<SootField> fields, Type type) {
+    Set<SootField> ret = new HashSet<SootField>();
+    for (SootField f : fields) {
+      if (f.getType().equals(type) && !f.isStatic()) ret.add(f);
+    }
+    return ret;
   }
 
   /**
@@ -211,7 +250,7 @@ public class AverroesJimpleBody {
       if (isJavaLangObjectInit()) {
         storeFinalizePointsToField(thisLocal);
       } else {
-        storeLibraryPointsToField(thisLocal);
+        storeTypedLibraryPointsToField(thisLocal, (RefLikeType) body.getThisLocal().getType());
       }
     }
   }
@@ -232,6 +271,15 @@ public class AverroesJimpleBody {
     return result;
   }
 
+  private Map<Local, RefLikeType> getRefLikeParameterLocalAndTypes() {
+    Map<Local, RefLikeType> result = new HashMap<>();
+    for (int i = 0; i < body.getMethod().getParameterCount(); i++) {
+      if (body.getMethod().getParameterType(i) instanceof RefLikeType) {
+        result.put(body.getParameterLocal(i), (RefLikeType) body.getMethod().getParameterType(i));
+      }
+    }
+    return result;
+  }
   /**
    * Store the given local field to a static soot field.
    *
@@ -270,6 +318,11 @@ public class AverroesJimpleBody {
     // storeStaticField(CodeGenerator.v().getAverroesLibraryPointsTo(),
     // from);
     storeInstanceField(getInstance(), CodeGenerator.v().getAverroesLibraryPointsTo(), from);
+  }
+
+  private void storeTypedLibraryPointsToField(Local from, RefLikeType refLikeType) {
+    SootField typedLPT = CodeGenerator.v().createAverroesTypedLibraryPointsToField(refLikeType);
+    storeInstanceField(getInstance(), typedLPT, from);
   }
 
   /**
@@ -392,7 +445,8 @@ public class AverroesJimpleBody {
     if (type instanceof PrimType) {
       return getPrimValue((PrimType) type);
     } else {
-      return castLptToType(type);
+      // return castLptToType(type);
+      return getTypeLpt((RefLikeType) type);
     }
   }
 
@@ -405,7 +459,7 @@ public class AverroesJimpleBody {
    */
   public Local castLptToType(Type type) {
     if (!lptCastToType.containsKey(type)) {
-      Local tmp = insertCastStatement(getLpt(), type);
+      Local tmp = insertCastStatement(getTypeLpt((RefLikeType) type), type);
       lptCastToType.put(type, tmp);
     }
     return lptCastToType.get(type);
@@ -423,6 +477,11 @@ public class AverroesJimpleBody {
     }
 
     return lpt;
+  }
+
+  public Local getTypeLpt(RefLikeType type) {
+    return loadField(
+        getInstance(), CodeGenerator.v().createAverroesTypedLibraryPointsToField(type), true);
   }
 
   /**
@@ -644,12 +703,12 @@ public class AverroesJimpleBody {
    *
    * @return
    */
-  private NopStmt insertGuardCondition() {
+  public NopStmt insertGuardCondition() {
     // This condition can produce dead code. That's why we should use
     // the "guard" field as a condition instead.
     // NeExpr cond = Jimple.v().newNeExpr(IntConstant.v(1),
     // IntConstant.v(1));
-    EqExpr cond = Jimple.v().newEqExpr(getGuard(), IntConstant.v(0));
+    EqExpr cond = Jimple.v().newEqExpr(getMatchingGuard(), IntConstant.v(0));
     NopStmt nop = Jimple.v().newNopStmt();
 
     body.getUnits().add(Jimple.v().newIfStmt(cond, nop));
@@ -710,6 +769,13 @@ public class AverroesJimpleBody {
     return tmp;
   }
 
+  public void reAddLoadLibraryPointsToField(RefLikeType type) {
+    Unit assign1 =
+        Jimple.v()
+            .newAssignStmt(
+                getInstance(), getFieldRef(CodeGenerator.v().getAverroesInstanceField()));
+    body.getUnits().add(assign1);
+  }
   /**
    * Get the field reference for the given Soot field.
    *
@@ -797,7 +863,6 @@ public class AverroesJimpleBody {
    * @param rvalue
    */
   public void insertAssignmentStatement(Value variable, Value rvalue, boolean addGuard) {
-    if (addGuard) insertRandomAssignment();
     Stmt stmt = Jimple.v().newAssignStmt(variable, rvalue);
     if (addGuard) insertAndGuardStmt(stmt);
     else insertStmt(stmt);
@@ -949,7 +1014,13 @@ public class AverroesJimpleBody {
           .add(
               Jimple.v()
                   .newInvokeStmt(Jimple.v().newSpecialInvokeExpr(base, toInvoke.makeRef(), args)));
-      storeLibraryPointsToField(base);
+      SootClass cls = toInvoke.getDeclaringClass();
+      List<SootClass> parents = new ArrayList<>();
+
+      parents.addAll(Hierarchy.v().getSuperclassesOf(cls));
+      parents.addAll(Hierarchy.v().getSuperinterfacesOf(cls));
+      storeTypedLibraryPointsToField(base, (RefLikeType) type);
+      for (SootClass p : parents) storeTypedLibraryPointsToField(base, p.getType());
     }
 
     return base;
@@ -989,9 +1060,18 @@ public class AverroesJimpleBody {
    */
   public List<Value> prepareActualArguments(SootMethod toCall) {
     List<Value> result = new ArrayList<Value>();
-
     for (Object obj : toCall.getParameterTypes()) {
       Type type = (Type) obj;
+      // TODO. Add assign instance.
+      // if (toCall.getDeclaringClass().getName().startsWith("android.")) {
+      // SootField field = CodeGenerator.v().getAverroesInstanceField();
+      // body.getUnits().add(Jimple.v().newAssignStmt(instance,  Jimple.v()
+      //          .newStaticFieldRef(field.makeRef())));
+      // if (type instanceof RefLikeType)
+
+      // reAddLoadLibraryPointsToField((RefLikeType) type);
+      // }
+
       Value val = getCompatibleValue(type);
       result.add(val);
     }
@@ -1015,7 +1095,7 @@ public class AverroesJimpleBody {
       return;
     }
     Jimple jimple = Jimple.v();
-    EqExpr cond = jimple.newEqExpr(getGuard(), IntConstant.v(0));
+    EqExpr cond = jimple.newEqExpr(getMatchingGuard(), IntConstant.v(0));
     IfStmt ifStmt = jimple.newIfStmt(cond, target);
     body.getUnits().add(ifStmt);
   }
@@ -1027,14 +1107,42 @@ public class AverroesJimpleBody {
    */
   public void insertRandomAssignment() {
     SootClass randomClass = Scene.v().forceResolve("java.lang.Math", SootClass.BODIES);
-    
+
     InvokeExpr invoke =
         Jimple.v()
-            .newStaticInvokeExpr(
-                randomClass.getMethod("random", new ArrayList<>()).makeRef());
+            .newStaticInvokeExpr(randomClass.getMethod("random", new ArrayList<>()).makeRef());
     Local local = this.newLocal(DoubleType.v());
     insertAssignmentStatement(local, invoke, false);
     CmpExpr compare = Jimple.v().newCmpExpr(local, DoubleConstant.v(0.5));
-    insertAssignmentStatement(getGuard(), compare, false);
+    insertAssignmentStatement(generateNewGuard(), compare, false);
+  }
+
+  Deque<Local> guards = new ArrayDeque<Local>();
+
+  public Local generateNewGuard() {
+    Local local = newLocal(BooleanType.v());
+    guards.addLast(local);
+    return local;
+  }
+
+  public Local getMatchingGuard() {
+    if (!guards.isEmpty()) return guards.pollLast();
+    else {
+      generateNewGuard();
+      return getMatchingGuard();
+    }
+  }
+
+  public void AddAssignToLPT(Local base) {
+    if (base.getType() instanceof RefLikeType) {
+      InstanceFieldRef right =
+          Jimple.v()
+              .newInstanceFieldRef(
+                  getInstance(),
+                  CodeGenerator.v()
+                      .createAverroesTypedLibraryPointsToField((RefLikeType) base.getType())
+                      .makeRef());
+      insertStmt(Jimple.v().newAssignStmt(base, right));
+    }
   }
 }

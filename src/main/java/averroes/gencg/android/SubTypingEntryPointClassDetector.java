@@ -2,9 +2,9 @@ package averroes.gencg.android;
 
 import averroes.options.AverroesOptions;
 import averroes.soot.Hierarchy;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import soot.SootClass;
 
@@ -13,9 +13,9 @@ public interface SubTypingEntryPointClassDetector extends EntryPointClassesDetec
 
   public EntryPointTypeTag sTag = new EntryPointTypeTag(EntryPointTypeTag.SUBTYPING);
 
-  default List<SootClass> getEntryPointClasses(
+  default Map<SootClass, SootClass> getEntryPointClasses(
       Hierarchy classHierarchy, Set<String> classSignatures) {
-    List<SootClass> ret = new ArrayList<>();
+    Map<SootClass, SootClass> ret = new HashMap<>();
     for (String androidClass : classSignatures) {
       SootClass epClass = classHierarchy.getClass(androidClass);
       if (epClass != null) {
@@ -24,7 +24,7 @@ public interface SubTypingEntryPointClassDetector extends EntryPointClassesDetec
             c -> {
               if (AverroesOptions.isLoadedApplicationClass(c.getName())) {
                 c.addTag(sTag);
-                ret.add(c);
+                ret.put(c, epClass);
               }
             });
       }

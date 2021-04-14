@@ -6,7 +6,7 @@ import averroes.soot.Hierarchy;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
-import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -34,13 +34,16 @@ public class AndroidEntryPointClassesDetector implements SubTypingEntryPointClas
     readPackageName();
   }
 
-  public List<SootClass> getEntryPointClasses() {
-    List<SootClass> ret = getEntryPointClasses(classHierarchy, ANDROID_ENTRYPOINT_CLASSES);
+  public Map<SootClass, SootClass> getEntryPointClasses() {
+    Map<SootClass, SootClass> ret =
+        getEntryPointClasses(classHierarchy, ANDROID_ENTRYPOINT_CLASSES);
+
     ret =
-        ret.stream()
-            .filter(c -> !c.getPackageName().startsWith("android.support."))
-            .collect(Collectors.toList());
-    for (SootClass androidClass : ret) {
+        ret.entrySet().stream()
+            .filter(x -> !x.getKey().getPackageName().startsWith("android.support."))
+            .collect(Collectors.toMap(x -> x.getKey(), x -> x.getValue()));
+
+    for (SootClass androidClass : ret.keySet()) {
       logger.info("Detected entry point class: " + androidClass.getName());
     }
     return ret;

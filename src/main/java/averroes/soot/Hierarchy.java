@@ -209,7 +209,9 @@ public class Hierarchy {
    */
   public static SootMethod getAnyPublicConstructor(SootClass cls) {
     for (SootMethod method : cls.getMethods()) {
-      if (method.isPublic() && method.isConstructor()) {
+      // FIXME constructor is not necessarily be public
+      // if (method.isPublic() && method.isConstructor()) {
+      if (method.isConstructor()) {
         return method;
       }
     }
@@ -1804,10 +1806,11 @@ public class Hierarchy {
    * @param libraryClass
    */
   private void cleanupMethodsInLibraryClass(SootClass libraryClass) {
-	for(SootClass c: getSubclassesOf(libraryClass)){
-		if(applicationClasses.contains(c))// if the library class is extended, we don't remove its method.
-			return;
-	}
+    for (SootClass c : getSubclassesOf(libraryClass)) {
+      if (applicationClasses.contains(
+          c)) // if the library class is extended, we don't remove its method.
+      return;
+    }
     Set<SootMethod> toRemove = new HashSet<SootMethod>();
     for (SootMethod method : libraryClass.getMethods()) {
       if (isLibraryMethodRemovable(method)) {
