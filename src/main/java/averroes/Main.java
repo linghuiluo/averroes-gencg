@@ -141,9 +141,6 @@ public class Main {
       for (SootClass c : Hierarchy.v().getApplicationClasses())
         CodeGenerator.v().writeClassFile(Paths.applicationClassesOutputDirectory().getPath(), c);
 
-      // CodeGenerator.v().createDummyMainClass();
-      // logger.info("Generated DummyMainClass");
-
       // Create the Averroes library class
       logger.info("");
       logger.info("Creating the skeleton for Averroes's main library class...");

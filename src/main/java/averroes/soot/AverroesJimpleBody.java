@@ -73,10 +73,7 @@ import soot.util.Chain;
 public class AverroesJimpleBody {
   protected static IntConstant ARRAY_LENGTH = IntConstant.v(1);
   private JimpleBody body;
-  private Local lpt;
-  private Local fpt;
   private Local instance;
-  private Local aveGuard;
   private Set<Local> invokeReturnVariables;
   private LocalVariableNumberer numberer;
   private Map<Type, Local> lptCastToType;
@@ -87,10 +84,7 @@ public class AverroesJimpleBody {
    * @param method
    */
   public AverroesJimpleBody(SootMethod method) {
-    lpt = null;
-    fpt = null;
     instance = null;
-    aveGuard = null;
     invokeReturnVariables = new HashSet<Local>();
     numberer = new LocalVariableNumberer();
     lptCastToType = new HashMap<Type, Local>();
@@ -156,7 +150,7 @@ public class AverroesJimpleBody {
                   "Can not find default constructor of the direct superclass for "
                       + body.getMethod().getSignature());
           // FIXME. super class can't be found
-          insertSpecialInvokeStatement(base, body.getMethod());
+          // insertSpecialInvokeStatement(base, body.getMethod());
         }
       }
     }
@@ -320,7 +314,7 @@ public class AverroesJimpleBody {
     storeInstanceField(getInstance(), CodeGenerator.v().getAverroesLibraryPointsTo(), from);
   }
 
-  private void storeTypedLibraryPointsToField(Local from, RefLikeType refLikeType) {
+  public void storeTypedLibraryPointsToField(Local from, RefLikeType refLikeType) {
     SootField typedLPT = CodeGenerator.v().createAverroesTypedLibraryPointsToField(refLikeType);
     storeInstanceField(getInstance(), typedLPT, from);
   }
@@ -465,37 +459,9 @@ public class AverroesJimpleBody {
     return lptCastToType.get(type);
   }
 
-  /**
-   * Get the local variable that represents the LPT. It also loads the LPT field if it's not loaded
-   * already.
-   *
-   * @return
-   */
-  public Local getLpt() {
-    if (!hasLpt()) {
-      lpt = loadField(getInstance(), CodeGenerator.v().getAverroesLibraryPointsTo(), true);
-    }
-
-    return lpt;
-  }
-
   public Local getTypeLpt(RefLikeType type) {
     return loadField(
         getInstance(), CodeGenerator.v().createAverroesTypedLibraryPointsToField(type), true);
-  }
-
-  /**
-   * Get the local variable that represents the FPT. It also loads the FPT field if it's not loaded
-   * already.
-   *
-   * @return
-   */
-  public Local getFpt() {
-    if (!hasFpt()) {
-      fpt = loadField(getInstance(), CodeGenerator.v().getAverroesFinalizePointsTo(), true);
-    }
-
-    return fpt;
   }
 
   /**
@@ -520,24 +486,6 @@ public class AverroesJimpleBody {
    */
   public Set<Local> getInvokeReturnVariables() {
     return invokeReturnVariables;
-  }
-
-  /**
-   * Check if this method has a local variable that holds the LPT.
-   *
-   * @return
-   */
-  public boolean hasLpt() {
-    return lpt != null;
-  }
-
-  /**
-   * Check if this method has a local variable that holds the FPT.
-   *
-   * @return
-   */
-  public boolean hasFpt() {
-    return fpt != null;
   }
 
   /**
@@ -714,19 +662,6 @@ public class AverroesJimpleBody {
     body.getUnits().add(Jimple.v().newIfStmt(cond, nop));
 
     return nop;
-  }
-
-  /**
-   * Load the guard field that is used to guard conditionals. See {@link #insertAndGuardStmt(Stmt)
-   * for more details}.
-   *
-   * @return
-   */
-  private Local getGuard() {
-    if (aveGuard == null) {
-      aveGuard = loadField(CodeGenerator.v().getAverroesGuardField(), true);
-    }
-    return aveGuard;
   }
 
   /**
