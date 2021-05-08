@@ -388,6 +388,7 @@ public class CodeGenerator {
       }
     }
     for (SootClass cls : Hierarchy.v().getApplicationClasses()) {
+      if (skipClass(cls.getName())) continue;
       if (!Hierarchy.isAbstractClass(cls)
           && !cls.isInterface()
           && !entryPointClasses.containsKey(cls)) {
@@ -437,10 +438,41 @@ public class CodeGenerator {
         }
       }
     }
+    // 1. The library can point to any concrete (i.e., not an interface nor
+    // abstract) library class
+    for (SootClass cls : getConcreteLibraryClasses()) {
+      List<Stmt> stmts = new ArrayList<>();
+      Local classLocal = localGenerator.generateLocal(cls.getType());
+      stmts.add(Jimple.v().newAssignStmt(classLocal, Jimple.v().newNewExpr(cls.getType())));
+      SootMethod init = Hierarchy.v().getAnyPublicConstructor(cls);
+      if (init != null && init.getName().equals(SootMethod.constructorName)) {
+        SootMethodRef constructorRef = Scene.v().makeConstructorRef(cls, init.getParameterTypes());
+        List<Value> args = new ArrayList<>();
+        for (Type p : constructorRef.getParameterTypes()) {
+          if (isSimpleType(p.toString())) args.add(getSimpleDefaultValue(p));
+          else {
+            args.add(NullConstant.v());
+          }
+        }
+        stmts.add(
+            Jimple.v()
+                .newInvokeStmt(Jimple.v().newSpecialInvokeExpr(classLocal, constructorRef, args)));
+        SootField typedLPT =
+            CodeGenerator.v().createAverroesTypedLibraryPointsToField(cls.getType());
+        stmts.add(
+            Jimple.v()
+                .newAssignStmt(
+                    Jimple.v().newInstanceFieldRef(ins, typedLPT.makeRef()), classLocal));
+        if (stmts.size() == 3) {
+          body.getUnits().addAll(stmts);
+        }
+      }
+    }
     // Add return statement
     body.getUnits().addLast(Jimple.v().newReturnVoidStmt());
     // Finally validate the Jimple body
     body.validate();
+
     mainMethod.setActiveBody(body);
   }
 
@@ -790,7 +822,8 @@ public class CodeGenerator {
   }
 
   private boolean skipClass(String classSignature) {
-    if (classSignature.startsWith("java.")) return true;
+    if (classSignature.startsWith("java.") || classSignature.startsWith("android.support."))
+      return true;
     return false;
   }
   /**
