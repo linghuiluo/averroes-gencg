@@ -522,7 +522,13 @@ public class CodeGenerator {
             method.setPhantom(false);
           }
         }
-      writeClassFile(Paths.libraryClassesOutputDirectory().getPath(), libraryClass);
+      if (AverroesOptions.includeJavaLibraryClass()) {
+        writeClassFile(Paths.libraryClassesOutputDirectory().getPath(), libraryClass);
+      } else {
+        if (!libraryClass.isJavaLibraryClass()) { // ingore java classes from rt.jar
+          writeClassFile(Paths.libraryClassesOutputDirectory().getPath(), libraryClass);
+        }
+      }
     }
   }
 

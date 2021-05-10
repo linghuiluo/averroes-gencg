@@ -148,6 +148,15 @@ public final class AverroesOptions {
           .required(false)
           .build();
 
+  private static Option includeJavaLibraryClass =
+      Option.builder("i")
+          .longOpt("include-java")
+          .desc(
+              "setting this falg will make Averroes include java library classes from rt.jar to placeholder.jar. It is disabled by default.")
+          .hasArg(false)
+          .required(false)
+          .build();
+
   private static Option configEntryPoints =
       Option.builder("c")
           .longOpt("config")
@@ -179,7 +188,8 @@ public final class AverroesOptions {
           .addOption(help)
           .addOption(enableGuards)
           .addOption(configEntryPoints)
-          .addOption(noInstrumentation);
+          .addOption(noInstrumentation)
+          .addOption(includeJavaLibraryClass);
 
   private static CommandLine cmd;
 
@@ -473,5 +483,9 @@ public final class AverroesOptions {
 
   public static boolean noInstrumetation() {
     return cmd.hasOption(noInstrumentation.getOpt());
+  }
+
+  public static boolean includeJavaLibraryClass() {
+    return cmd.hasOption(includeJavaLibraryClass.getOpt());
   }
 }

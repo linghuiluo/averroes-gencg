@@ -155,12 +155,14 @@ public class Main {
           Paths.libraryClassesOutputDirectory().getPath(),
           CodeGenerator.v().getAverroesAbstractLibraryClass());
 
-      // Create empty classes for the basic classes required internally by
-      // Soot
-      logger.info("Generating empty basic library classes required by Soot...");
-      for (SootClass basicClass :
-          Hierarchy.v().getBasicClassesDatabase().getMissingBasicClasses()) {
-        CodeGenerator.writeClassFile(Paths.libraryClassesOutputDirectory().getPath(), basicClass);
+      if (AverroesOptions.includeJavaLibraryClass()) {
+        // Create empty classes for the basic classes required internally by
+        // Soot
+        logger.info("Generating empty basic library classes required by Soot...");
+        for (SootClass basicClass :
+            Hierarchy.v().getBasicClassesDatabase().getMissingBasicClasses()) {
+          CodeGenerator.writeClassFile(Paths.libraryClassesOutputDirectory().getPath(), basicClass);
+        }
       }
     }
   }
