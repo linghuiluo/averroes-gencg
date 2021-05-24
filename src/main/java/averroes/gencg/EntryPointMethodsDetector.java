@@ -1,4 +1,4 @@
-package averroes.gencg.android;
+package averroes.gencg;
 
 import java.util.List;
 import soot.SootClass;

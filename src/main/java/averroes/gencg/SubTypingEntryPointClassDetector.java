@@ -1,4 +1,4 @@
-package averroes.gencg.android;
+package averroes.gencg;
 
 import averroes.options.AverroesOptions;
 import averroes.soot.Hierarchy;
@@ -9,7 +9,7 @@ import java.util.Set;
 import soot.SootClass;
 
 /** @author Linghui Luo */
-public interface SubTypingEntryPointClassDetector extends EntryPointClassesDetector {
+public interface SubTypingEntryPointClassDetector extends ClassesDetector {
 
   public EntryPointTypeTag sTag = new EntryPointTypeTag(EntryPointTypeTag.SUBTYPING);
 

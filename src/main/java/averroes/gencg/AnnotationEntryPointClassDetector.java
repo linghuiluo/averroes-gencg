@@ -1,4 +1,4 @@
-package averroes.gencg.android;
+package averroes.gencg;
 
 import averroes.soot.Hierarchy;
 import java.util.HashMap;
@@ -9,7 +9,7 @@ import soot.tagkit.AnnotationTag;
 import soot.tagkit.VisibilityAnnotationTag;
 
 /** @author Linghui Luo */
-public interface AnnotationEntryPointClassDetector extends EntryPointClassesDetector {
+public interface AnnotationEntryPointClassDetector extends ClassesDetector {
 
   public EntryPointTypeTag aTag = new EntryPointTypeTag(EntryPointTypeTag.ANNOTATION);
 

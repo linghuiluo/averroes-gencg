@@ -10,10 +10,10 @@
 package averroes.soot;
 
 import averroes.FrameworkType;
-import averroes.gencg.android.AnnotationEntryPointMethodDetector;
-import averroes.gencg.android.EntryPointConfigurationReader;
-import averroes.gencg.android.EntryPointTypeTag;
-import averroes.gencg.android.SpringEntryPointMethodDetector;
+import averroes.gencg.AnnotationEntryPointMethodDetector;
+import averroes.gencg.EntryPointConfigurationReader;
+import averroes.gencg.EntryPointTypeTag;
+import averroes.gencg.SpringEntryPointMethodDetector;
 import averroes.options.AverroesOptions;
 import averroes.tamiflex.TamiFlexFactsDatabase;
 import averroes.util.io.Paths;
@@ -32,8 +32,10 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import soot.ArrayType;
+import soot.Body;
 import soot.BooleanType;
 import soot.ByteType;
 import soot.CharType;
@@ -62,16 +64,20 @@ import soot.baf.BafASMBackend;
 import soot.baf.SpecialInvokeInst;
 import soot.dava.internal.javaRep.DIntConstant;
 import soot.javaToJimple.LocalGenerator;
+import soot.jimple.AbstractStmtSwitch;
 import soot.jimple.AssignStmt;
 import soot.jimple.DoubleConstant;
 import soot.jimple.FloatConstant;
+import soot.jimple.InstanceFieldRef;
 import soot.jimple.IntConstant;
 import soot.jimple.InvokeExpr;
+import soot.jimple.InvokeStmt;
 import soot.jimple.Jimple;
 import soot.jimple.JimpleBody;
 import soot.jimple.LongConstant;
 import soot.jimple.NopStmt;
 import soot.jimple.NullConstant;
+import soot.jimple.ReturnVoidStmt;
 import soot.jimple.Stmt;
 import soot.jimple.StringConstant;
 import soot.jimple.toolkits.scalar.NopEliminator;
@@ -284,6 +290,64 @@ public class CodeGenerator {
 
       // Write the class file to disk
       writeClassFile(Paths.libraryClassesOutputDirectory().getPath(), averroesLibraryClass);
+    }
+  }
+
+  public void createObjects(Map<SootClass, Set<SootField>> createObjects) {
+    for (Entry<SootClass, Set<SootField>> e : createObjects.entrySet()) {
+      SootClass c = e.getKey();
+      SootMethod defaultInit = Hierarchy.getDefaultConstructor(c);
+      UnitPatchingChain units = defaultInit.retrieveActiveBody().getUnits();
+
+      Body body = defaultInit.getActiveBody();
+      for (SootField f : e.getValue()) {
+
+        for (Iterator<Unit> iter = units.snapshotIterator(); iter.hasNext(); ) {
+          final Unit u = iter.next();
+          u.apply(
+              new AbstractStmtSwitch() {
+
+                public void caseReturnVoidStmt(ReturnVoidStmt returnStmt) {
+                  int localCount = body.getLocalCount();
+                  localCount++;
+                  Local local = soot.jimple.Jimple.v().newLocal("temp" + localCount, f.getType());
+                  body.getLocals().add(local);
+
+                  AssignStmt newStmt =
+                      Jimple.v().newAssignStmt(local, Jimple.v().newNewExpr((RefType) f.getType()));
+                  units.insertBefore(newStmt, returnStmt);
+                  RefType t = (RefType) f.getType();
+                  SootClass fieldClass = t.getSootClass();
+                  if (fieldClass.getMethodUnsafe(Names.DEFAULT_CONSTRUCTOR_SUBSIG) == null) {
+                    // the field class is interface.
+                    return;
+                  }
+
+                  SootMethod fieldInit = Hierarchy.getDefaultConstructor(fieldClass);
+                  SootMethodRef constructorRef =
+                      Scene.v().makeConstructorRef(fieldClass, fieldInit.getParameterTypes());
+                  List<Value> args = new ArrayList<>();
+                  for (Type p : constructorRef.getParameterTypes()) {
+                    if (isSimpleType(p.toString())) args.add(getSimpleDefaultValue(p));
+                    else {
+                      args.add(NullConstant.v());
+                    }
+                  }
+
+                  InvokeStmt specialInvoke =
+                      Jimple.v()
+                          .newInvokeStmt(
+                              Jimple.v().newSpecialInvokeExpr(local, constructorRef, args));
+                  units.insertBefore(specialInvoke, returnStmt);
+                  InstanceFieldRef fieldRef =
+                      Jimple.v().newInstanceFieldRef(body.getThisLocal(), f.makeRef());
+                  AssignStmt assign = Jimple.v().newAssignStmt(fieldRef, local);
+                  units.insertBefore(assign, returnStmt);
+                }
+              });
+        }
+      }
+      body.validate();
     }
   }
 

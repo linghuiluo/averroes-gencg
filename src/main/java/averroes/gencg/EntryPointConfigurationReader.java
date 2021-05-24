@@ -1,4 +1,4 @@
-package averroes.gencg.android;
+package averroes.gencg;
 
 import averroes.options.AverroesOptions;
 import java.io.BufferedReader;
@@ -19,12 +19,15 @@ public class EntryPointConfigurationReader {
 
   private HashMap<String, Set<String>> entryPointClasses;
   private HashMap<String, Set<String>> entryPointMethods;
+  private HashMap<String, Set<String>> createObjects;
 
   public EntryPointConfigurationReader() {
     String epClassPath = AverroesOptions.getEntryPointClasses();
     String epMethodPath = AverroesOptions.getEntryPointMethods();
+    String createObjectsPath = AverroesOptions.getCreateObjects();
     entryPointClasses = read(epClassPath);
     entryPointMethods = read(epMethodPath);
+    createObjects = read(createObjectsPath);
   }
 
   private HashMap<String, Set<String>> read(String path) {
@@ -59,5 +62,9 @@ public class EntryPointConfigurationReader {
 
   public Set<String> getEntryPointMethods(String frameworkType) {
     return this.entryPointMethods.get(frameworkType);
+  }
+
+  public Set<String> getCreateObjects(String frameworkType) {
+    return this.createObjects.get(frameworkType);
   }
 }

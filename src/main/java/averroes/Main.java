@@ -9,10 +9,10 @@
  */
 package averroes;
 
-import averroes.gencg.android.AndroidEntryPointClassesDetector;
-import averroes.gencg.android.EntryPointClassesDetector;
-import averroes.gencg.android.EntryPointConfigurationReader;
-import averroes.gencg.android.SpringEntryPointClassesDetector;
+import averroes.gencg.AndroidEntryPointClassesDetector;
+import averroes.gencg.ClassesDetector;
+import averroes.gencg.EntryPointConfigurationReader;
+import averroes.gencg.SpringEntryPointClassesDetector;
 import averroes.options.AverroesOptions;
 import averroes.soot.ClassFileProvider;
 import averroes.soot.CodeGenerator;
@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.zip.ZipException;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -34,6 +35,7 @@ import soot.G;
 import soot.PackManager;
 import soot.Scene;
 import soot.SootClass;
+import soot.SootField;
 import soot.options.Options;
 
 /**
@@ -124,7 +126,7 @@ public class Main {
     EntryPointConfigurationReader reader = new EntryPointConfigurationReader();
 
     if (!AverroesOptions.isDefaultJavaApplication()) {
-      EntryPointClassesDetector cdetector;
+      ClassesDetector cdetector;
       switch (AverroesOptions.getFrameworkType()) {
         case FrameworkType.ANDROID:
           cdetector = new AndroidEntryPointClassesDetector(Hierarchy.v(), reader);
@@ -137,6 +139,8 @@ public class Main {
       }
       Map<SootClass, SootClass> entryPointClasses = cdetector.getEntryPointClasses();
       CodeGenerator.v().createCraftedInterfacesOfEntryPointClasses(entryPointClasses, reader);
+      Map<SootClass, Set<SootField>> createObjects = cdetector.getCreateObjects();
+      CodeGenerator.v().createObjects(createObjects);
 
       for (SootClass c : Hierarchy.v().getApplicationClasses())
         CodeGenerator.v().writeClassFile(Paths.applicationClassesOutputDirectory().getPath(), c);
@@ -231,6 +235,10 @@ public class Main {
                 + Paths.organizedLibraryJarFile().toString()
                 + File.pathSeparator
                 + rtJar);
+    // FIXME To make sure concrete library classes that are only used in the library to be detected,
+    // replaced by this List<String> dir = Arrays.asList(appPath,
+    // Paths.organizedLibraryJarFile().toString());
+    // otherwise the class Hierarchy will miss classes that are not used by the application.
     Options.v().set_process_dir(Collections.singletonList(appPath));
     Options.v().set_allow_phantom_refs(true);
     Options.v().set_ignore_resolving_levels(true);

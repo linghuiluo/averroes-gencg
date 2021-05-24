@@ -481,6 +481,13 @@ public final class AverroesOptions {
     return config + File.separator + "EntryPointMethods.txt";
   }
 
+  public static String getCreateObjects() {
+    String config = "config";
+    if (cmd.hasOption(configEntryPoints.getOpt()))
+      config = cmd.getOptionValue(configEntryPoints.getOpt());
+    return config + File.separator + "CreateObjects.txt";
+  }
+
   public static boolean noInstrumetation() {
     return cmd.hasOption(noInstrumentation.getOpt());
   }

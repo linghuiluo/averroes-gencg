@@ -1,22 +1,27 @@
-package averroes.gencg.android;
+package averroes.gencg;
 
 import averroes.FrameworkType;
 import averroes.soot.Hierarchy;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import soot.SootClass;
+import soot.SootField;
 
-public class SpringEntryPointClassesDetector implements AnnotationEntryPointClassDetector {
+public class SpringEntryPointClassesDetector
+    implements AnnotationEntryPointClassDetector, AnnotationCreateObjectsDetector {
 
   private static Logger logger = LoggerFactory.getLogger(SpringEntryPointClassesDetector.class);
   protected Hierarchy classHierarchy;
   protected Set<String> SPRING_ENTRYPOINT_CLASSES;
+  protected Set<String> SPRING_CREATE_OBJECTS;
 
   public SpringEntryPointClassesDetector(Hierarchy hierachy, EntryPointConfigurationReader reader) {
     this.classHierarchy = hierachy;
     this.SPRING_ENTRYPOINT_CLASSES = reader.getEntryPointClasses(FrameworkType.SPRING);
+    this.SPRING_CREATE_OBJECTS = reader.getCreateObjects(FrameworkType.SPRING);
   }
 
   @Override
@@ -27,5 +32,21 @@ public class SpringEntryPointClassesDetector implements AnnotationEntryPointClas
       logger.info("Detected entry point class: " + c.getName());
     }
     return epClasses;
+  }
+
+  @Override
+  public Map<SootClass, Set<SootField>> getCreateObjects() {
+    Map<SootClass, Set<SootField>> createObjects =
+        getCreateObjects(classHierarchy, SPRING_CREATE_OBJECTS);
+    for (Entry<SootClass, Set<SootField>> e : createObjects.entrySet()) {
+      for (SootField f : e.getValue())
+        logger.info(
+            "Detected field "
+                + f.getName()
+                + " in class "
+                + e.getKey().getName()
+                + " needs to be initialized.");
+    }
+    return createObjects;
   }
 }

@@ -1,10 +1,11 @@
-package averroes.gencg.android;
+package averroes.gencg;
 
 import averroes.FrameworkType;
 import averroes.options.AverroesOptions;
 import averroes.soot.Hierarchy;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.Set;
@@ -18,6 +19,7 @@ import pxb.android.axml.AxmlReader;
 import pxb.android.axml.AxmlVisitor;
 import pxb.android.axml.NodeVisitor;
 import soot.SootClass;
+import soot.SootField;
 
 /** @author Linghui Luo */
 public class AndroidEntryPointClassesDetector implements SubTypingEntryPointClassDetector {
@@ -108,5 +110,10 @@ public class AndroidEntryPointClassesDetector implements SubTypingEntryPointClas
         }
       }
     }
+  }
+
+  @Override
+  public Map<SootClass, Set<SootField>> getCreateObjects() {
+    return Collections.emptyMap();
   }
 }

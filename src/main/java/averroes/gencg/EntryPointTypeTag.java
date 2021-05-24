@@ -1,4 +1,4 @@
-package averroes.gencg.android;
+package averroes.gencg;
 
 import soot.tagkit.AttributeValueException;
 import soot.tagkit.Tag;
