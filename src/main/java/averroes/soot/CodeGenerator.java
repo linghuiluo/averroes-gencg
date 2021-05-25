@@ -66,7 +66,9 @@ import soot.dava.internal.javaRep.DIntConstant;
 import soot.javaToJimple.LocalGenerator;
 import soot.jimple.AbstractStmtSwitch;
 import soot.jimple.AssignStmt;
+import soot.jimple.CmpExpr;
 import soot.jimple.DoubleConstant;
+import soot.jimple.EqExpr;
 import soot.jimple.FloatConstant;
 import soot.jimple.InstanceFieldRef;
 import soot.jimple.IntConstant;
@@ -296,11 +298,29 @@ public class CodeGenerator {
   public void createObjects(Map<SootClass, Set<SootField>> createObjects) {
     for (Entry<SootClass, Set<SootField>> e : createObjects.entrySet()) {
       SootClass c = e.getKey();
-      SootMethod defaultInit = Hierarchy.getDefaultConstructor(c);
-      UnitPatchingChain units = defaultInit.retrieveActiveBody().getUnits();
-
+      SootMethod defaultInit = c.getMethodUnsafe(Names.DEFAULT_CONSTRUCTOR_SUBSIG);
+      if (defaultInit == null) {
+        defaultInit = Hierarchy.getNewDefaultConstructor();
+        c.addMethod(defaultInit);
+        JimpleBody b = new JimpleBody(defaultInit);
+        b.insertIdentityStmts();
+        InvokeStmt specialInvoke =
+            Jimple.v()
+                .newInvokeStmt(
+                    Jimple.v()
+                        .newSpecialInvokeExpr(
+                            b.getThisLocal(),
+                            Scene.v()
+                                .makeConstructorRef(
+                                    Scene.v().getSootClass(Names.JAVA_LANG_OBJECT),
+                                    Collections.EMPTY_LIST)));
+        b.getUnits().add(specialInvoke);
+        b.getUnits().add(Jimple.v().newReturnVoidStmt());
+        defaultInit.setActiveBody(b);
+      }
       Body body = defaultInit.getActiveBody();
-      for (SootField f : e.getValue()) {
+      UnitPatchingChain units = body.getUnits();
+      for (SootField field : e.getValue()) {
 
         for (Iterator<Unit> iter = units.snapshotIterator(); iter.hasNext(); ) {
           final Unit u = iter.next();
@@ -308,21 +328,57 @@ public class CodeGenerator {
               new AbstractStmtSwitch() {
 
                 public void caseReturnVoidStmt(ReturnVoidStmt returnStmt) {
-                  int localCount = body.getLocalCount();
-                  localCount++;
-                  Local local = soot.jimple.Jimple.v().newLocal("temp" + localCount, f.getType());
-                  body.getLocals().add(local);
 
-                  AssignStmt newStmt =
-                      Jimple.v().newAssignStmt(local, Jimple.v().newNewExpr((RefType) f.getType()));
-                  units.insertBefore(newStmt, returnStmt);
-                  RefType t = (RefType) f.getType();
+                  RefType t = (RefType) field.getType();
                   SootClass fieldClass = t.getSootClass();
-                  if (fieldClass.getMethodUnsafe(Names.DEFAULT_CONSTRUCTOR_SUBSIG) == null) {
-                    // the field class is interface.
-                    return;
+                  LinkedHashSet<SootClass> fieldClasses = new LinkedHashSet<>();
+                  if (!fieldClass.isConcrete()) {
+                    // the field class is interface or abstract;
+                    fieldClasses.addAll(Hierarchy.v().getConcreteSubclassesOf(fieldClass));
+                    fieldClasses.addAll(Hierarchy.v().getConcreteImplementersOf(fieldClass));
+                  } else {
+                    fieldClasses.add(fieldClass);
                   }
+                  boolean addPredicate = fieldClasses.size() > 1;
+                  for (SootClass fc : fieldClasses) {
+                    int localCount = body.getLocalCount() + 1;
+                    Local local = Jimple.v().newLocal("temp" + localCount, field.getType());
+                    body.getLocals().add(local);
+                    createObject(body, units, field, returnStmt, local, fc, addPredicate);
+                  }
+                }
 
+                private void createObject(
+                    Body body,
+                    UnitPatchingChain units,
+                    SootField f,
+                    ReturnVoidStmt returnStmt,
+                    Local local,
+                    SootClass fieldClass,
+                    boolean addPredicate) {
+                  Unit nopStmt = Jimple.v().newNopStmt(); // placeholder for if target
+                  if (addPredicate) {
+                    SootClass randomClass =
+                        Scene.v().forceResolve("java.lang.Math", SootClass.BODIES);
+                    InvokeExpr invoke =
+                        Jimple.v()
+                            .newStaticInvokeExpr(
+                                randomClass.getMethod("random", new ArrayList<>()).makeRef());
+                    Local v = Jimple.v().newLocal("v" + local.getName(), DoubleType.v());
+                    body.getLocals().add(v);
+                    units.insertBefore(Jimple.v().newAssignStmt(v, invoke), returnStmt);
+                    CmpExpr compare = Jimple.v().newCmpExpr(v, DoubleConstant.v(0.5));
+                    Local p = Jimple.v().newLocal("p" + local.getName(), BooleanType.v());
+                    body.getLocals().add(p);
+                    units.insertBefore(Jimple.v().newAssignStmt(p, compare), returnStmt);
+                    EqExpr cond = Jimple.v().newEqExpr(p, IntConstant.v(0));
+                    units.insertBefore(Jimple.v().newIfStmt(cond, nopStmt), returnStmt);
+                  }
+                  AssignStmt newStmt =
+                      Jimple.v()
+                          .newAssignStmt(
+                              local, Jimple.v().newNewExpr((RefType) fieldClass.getType()));
+                  units.insertBefore(newStmt, returnStmt);
                   SootMethod fieldInit = Hierarchy.getDefaultConstructor(fieldClass);
                   SootMethodRef constructorRef =
                       Scene.v().makeConstructorRef(fieldClass, fieldInit.getParameterTypes());
@@ -343,6 +399,8 @@ public class CodeGenerator {
                       Jimple.v().newInstanceFieldRef(body.getThisLocal(), f.makeRef());
                   AssignStmt assign = Jimple.v().newAssignStmt(fieldRef, local);
                   units.insertBefore(assign, returnStmt);
+                  if (addPredicate)
+                    units.insertBefore(nopStmt, returnStmt); // add the nop placeholder
                 }
               });
         }
