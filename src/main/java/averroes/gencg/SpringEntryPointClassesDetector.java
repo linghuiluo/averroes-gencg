@@ -16,18 +16,20 @@ public class SpringEntryPointClassesDetector
   private static Logger logger = LoggerFactory.getLogger(SpringEntryPointClassesDetector.class);
   protected Hierarchy classHierarchy;
   protected Set<String> SPRING_ENTRYPOINT_CLASSES;
+  protected Set<String> SPRING_ENTRYPOINT_METHODS;
   protected Set<String> SPRING_CREATE_OBJECTS;
 
   public SpringEntryPointClassesDetector(Hierarchy hierachy, EntryPointConfigurationReader reader) {
     this.classHierarchy = hierachy;
     this.SPRING_ENTRYPOINT_CLASSES = reader.getEntryPointClasses(FrameworkType.SPRING);
+    this.SPRING_ENTRYPOINT_METHODS = reader.getEntryPointMethods(FrameworkType.SPRING);
     this.SPRING_CREATE_OBJECTS = reader.getCreateObjects(FrameworkType.SPRING);
   }
 
   @Override
   public Map<SootClass, SootClass> getEntryPointClasses() {
     Map<SootClass, SootClass> epClasses =
-        getEntryPointClasses(classHierarchy, SPRING_ENTRYPOINT_CLASSES);
+        getEntryPointClasses(classHierarchy, SPRING_ENTRYPOINT_CLASSES, SPRING_ENTRYPOINT_METHODS);
     for (SootClass c : epClasses.keySet()) {
       logger.info("Detected entry point class: " + c.getName());
     }

@@ -6,6 +6,7 @@ org.springframework.web.bind.annotation.InitBinder _SPRING_
 org.springframework.web.bind.annotation.PatchMapping _SPRING_
 org.springframework.web.bind.annotation.PutMapping _SPRING_
 org.springframework.web.bind.annotation.RequestMapping _SPRING_
-
-
+org.springframework.beans.factory.annotation.Autowired _SPRING_
+javax.inject.Inject _SPRING_
+javax.annotation.Resource _SPRING_
 

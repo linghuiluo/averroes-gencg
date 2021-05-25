@@ -486,7 +486,6 @@ public class CodeGenerator {
             if (!added)
               if (isSimpleType(p.toString())) args.add(getSimpleDefaultValue(p));
               else {
-
                 args.add(NullConstant.v());
               }
           }
@@ -498,14 +497,20 @@ public class CodeGenerator {
                               .newSpecialInvokeExpr(
                                   localForClasses.get(klass), constructorRef, args)));
           Local classLocal = localForClasses.get(klass);
-          SootClass parent = entryPointClasses.get(klass);
-          SootField typedLPT =
-              CodeGenerator.v().createAverroesTypedLibraryPointsToField(parent.getType());
-          AssignStmt storeStmt =
-              Jimple.v()
-                  .newAssignStmt(
-                      Jimple.v().newInstanceFieldRef(ins, typedLPT.makeRef()), classLocal);
-          body.getUnits().add(storeStmt);
+          Set<SootClass> parents = new HashSet<>();
+          parents.add(entryPointClasses.get(klass));
+          parents.addAll(Hierarchy.v().getSuperclassesOf(klass));
+          parents.addAll(Hierarchy.v().getSuperinterfacesOf(klass));
+          for (SootClass parent : parents) {
+            if (parent.getName().equals(Names.JAVA_LANG_OBJECT)) continue;
+            SootField typedLPT =
+                CodeGenerator.v().createAverroesTypedLibraryPointsToField(parent.getType());
+            AssignStmt storeStmt =
+                Jimple.v()
+                    .newAssignStmt(
+                        Jimple.v().newInstanceFieldRef(ins, typedLPT.makeRef()), classLocal);
+            body.getUnits().add(storeStmt);
+          }
         }
       }
     }
@@ -514,17 +519,14 @@ public class CodeGenerator {
       if (!Hierarchy.isAbstractClass(cls)
           && !cls.isInterface()
           && !entryPointClasses.containsKey(cls)) {
-        List<SootClass> allSuperTypes = new ArrayList<>();
-        Hierarchy.v()
-            .getSuperclassesOf(cls)
-            .forEach(
-                c -> {
-                  if (!c.getName().equals("java.lang.Object")) allSuperTypes.add(c);
-                });
-        allSuperTypes.addAll(Hierarchy.v().getSuperinterfacesOf(cls));
-        if (allSuperTypes.size() > 0) {
+        List<SootClass> allDeclareTypes = new ArrayList<>();
+        allDeclareTypes.addAll(Hierarchy.v().getSuperclassesOf(cls));
+        allDeclareTypes.addAll(Hierarchy.v().getSuperinterfacesOf(cls));
+        allDeclareTypes.add(cls);
+        if (allDeclareTypes.size() > 0) {
           List<Stmt> stmts = new ArrayList<>();
           Local classLocal = localGenerator.generateLocal(cls.getType());
+          // new stmt
           stmts.add(Jimple.v().newAssignStmt(classLocal, Jimple.v().newNewExpr(cls.getType())));
           SootMethod init = Hierarchy.v().getAnyPublicConstructor(cls);
           if (init != null && init.getName().equals(SootMethod.constructorName)) {
@@ -534,18 +536,17 @@ public class CodeGenerator {
             for (Type p : constructorRef.getParameterTypes()) {
               if (isSimpleType(p.toString())) args.add(getSimpleDefaultValue(p));
               else {
+
                 args.add(NullConstant.v());
               }
             }
+            // invoke init
             stmts.add(
                 Jimple.v()
                     .newInvokeStmt(
                         Jimple.v().newSpecialInvokeExpr(classLocal, constructorRef, args)));
-            // TODO remove the following lines
-            // System.out.print(cls.getName()+" ->");
-            // allTypes.forEach(c -> System.out.print(c.getName() + " ->"));
-            // System.out.println();
-            for (SootClass p : allSuperTypes) {
+            for (SootClass p : allDeclareTypes) {
+              if (p.getName().equals(Names.JAVA_LANG_OBJECT)) continue;
               SootField typedLPT =
                   CodeGenerator.v().createAverroesTypedLibraryPointsToField(p.getType());
               stmts.add(
@@ -1030,7 +1031,7 @@ public class CodeGenerator {
     LinkedHashSet<SootMethod> result = new LinkedHashSet<SootMethod>();
     result.addAll(Hierarchy.v().getLibrarySuperMethodsOfApplicationMethods());
     result.addAll(getTamiFlexApplicationMethodInvokes());
-
+    result.addAll(Hierarchy.v().getAnnotatedApplicationMethods());
     // Get those methods specified in the apk resource xml files that handle
     // onClick events.
     // if (Options.v().src_prec() == Options.src_prec_apk) {
@@ -1476,14 +1477,15 @@ public class CodeGenerator {
   }
 
   private void replaceInvokeToSuperclassConstructor(SootClass c, SootClass iface) {
-    SootMethod constructor = c.getMethodByName(SootMethod.constructorName);
+    SootMethod constructor = c.getMethodUnsafe(Names.DEFAULT_CONSTRUCTOR_SUBSIG);
+    if (constructor == null) return;
     UnitPatchingChain units = constructor.getActiveBody().getUnits();
     Iterator<Unit> it = units.snapshotIterator();
     List<Unit> toInsert = new ArrayList<>();
     SootMethodRef methodRef =
         Scene.v()
             .makeConstructorRef(
-                iface, iface.getMethodByName(SootMethod.constructorName).getParameterTypes());
+                iface, iface.getMethodUnsafe(Names.DEFAULT_CONSTRUCTOR_SUBSIG).getParameterTypes());
     Unit insert = Baf.v().newSpecialInvokeInst(methodRef);
     toInsert.add(insert);
     Unit toRemove = null;

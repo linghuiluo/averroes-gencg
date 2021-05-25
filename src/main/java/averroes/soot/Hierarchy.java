@@ -68,7 +68,7 @@ public class Hierarchy {
 
   private HashMap<SootClass, Set<SootMethod>> classToLibrarySuperMethods;
   private Set<SootMethod> librarySuperMethodsOfApplicationMethods;
-
+  private Set<SootMethod> annotatedApplicationMethods;
   private Set<SootClass> applicationClassesReferencedByName;
   private Set<SootMethod> libraryMethodsReferencedInApplication;
   private Set<SootField> libraryFieldsReferencedInApplication;
@@ -130,6 +130,7 @@ public class Hierarchy {
 
     classToLibrarySuperMethods = new HashMap<SootClass, Set<SootMethod>>();
     librarySuperMethodsOfApplicationMethods = new HashSet<SootMethod>();
+    annotatedApplicationMethods = new HashSet<SootMethod>();
 
     applicationClassesReferencedByName = new HashSet<SootClass>();
     libraryMethodsReferencedInApplication = new HashSet<SootMethod>();
@@ -1476,6 +1477,10 @@ public class Hierarchy {
     return librarySuperMethodsOfApplicationMethods;
   }
 
+  public Set<SootMethod> getAnnotatedApplicationMethods() {
+    return annotatedApplicationMethods;
+  }
+
   /**
    * Check if the given method is a library method referenced by the application.
    *
@@ -2014,5 +2019,9 @@ public class Hierarchy {
     libraryInterfaces.add(iface);
     librarySuperMethodsOfApplicationMethods.addAll(iface.getMethods());
     libraryMethodCount += libraryMethodCount + iface.getMethodCount();
+  }
+
+  public void addAnnotatedApplicationMethods(SootMethod m) {
+    this.annotatedApplicationMethods.add(m);
   }
 }
