@@ -224,8 +224,10 @@ public class Main {
       appPath = AverroesOptions.getAndroidApk();
       Options.v().set_src_prec(Options.src_prec_apk);
       Options.v().set_process_multiple_dex(true);
+    } else {
+      Options.v().set_keep_line_number(true);
+      Options.v().setPhaseOption("jb", "use-original-names:true");
     }
-
     String rtJar =
         System.getProperty("java.home") + File.separator + "lib" + File.separator + "rt.jar";
     Options.v()

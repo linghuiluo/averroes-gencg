@@ -100,6 +100,8 @@ public class ArchiveOrganizer {
    * @throws URISyntaxException
    */
   public void organizeInputJarFiles() throws ZipException, IOException {
+    // clean up
+    Paths.deleteDirectory(AverroesOptions.getOutputDirectory() + File.separator + "lib");
     libraryClassPath.addAll(AverroesOptions.getLibraryClassPath());
     processApplicationFiles();
     processDependencies();
@@ -215,7 +217,7 @@ public class ArchiveOrganizer {
             }
           } else if (entry.getName().endsWith(".jar")) {
             if (FrameworkType.SPRING.equals(AverroesOptions.getFrameworkType())) {
-              // logger.info("Extracting dependency " + entry.getName());
+              logger.info("Extracting dependency " + entry.getName());
               File dir = new File(AverroesOptions.getOutputDirectory() + File.separator + "lib");
               if (!dir.exists()) dir.mkdirs();
               File f =
