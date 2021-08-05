@@ -107,11 +107,14 @@ public class CodeGenerator {
   private AverroesJimpleBody doItAllBody = null;
   private Map<SootClass, SootClass> entryPointClasses = null;
 
+  private HashMap<SootClass, SootClass>
+      instrumentedInterfaces; // (original class, its instrumented interface)
+
   /** Create a new code generator with the given class Cleanup.v(). */
   private CodeGenerator() {
     libraryInterfaceToConcreteImplementationClass = new HashMap<SootClass, SootClass>();
     abstractLibraryClassToConcreteImplementationClass = new HashMap<SootClass, SootClass>();
-
+    instrumentedInterfaces = new HashMap<SootClass, SootClass>();
     generatedMethodCount = 0;
     generatedClassCount = 0;
 
@@ -1470,6 +1473,7 @@ public class CodeGenerator {
       if (t.hasTypeOfAnnotation()) {
         List<SootMethod> eMethods = mdetector.getEntryPointMethods(c);
         SootClass iface = createCraftedInterface(c, eMethods);
+        instrumentedInterfaces.put(c, iface);
         replaceInvokeToSuperclassConstructor(c, iface);
         entryPointClasses.replace(c, iface);
       }
@@ -1499,5 +1503,64 @@ public class CodeGenerator {
       }
     }
     if (toRemove != null) units.remove(toRemove);
+  }
+
+  public void replaceGetBean(Map<SootClass, SootClass> entryPointClasses) {
+    for (SootClass cl : Scene.v().getApplicationClasses()) {
+      for (SootMethod m : cl.getMethods()) {
+        if (!m.hasActiveBody()) continue;
+        UnitPatchingChain units = m.getActiveBody().getUnits();
+        Iterator<Unit> iter = units.snapshotIterator();
+        while (iter.hasNext()) {
+          Unit unit = iter.next();
+          unit.apply(
+              new AbstractStmtSwitch() {
+                public void caseAssignStmt(AssignStmt stmt) {
+                  if (stmt.containsInvokeExpr()
+                      && stmt.getInvokeExpr().getMethodRef().getName().equals("getBean")) {
+                    units.remove(stmt);
+                    Unit nextUnit;
+                    if (iter.hasNext()) {
+                      nextUnit = iter.next();
+                      nextUnit.apply(
+                          new AbstractStmtSwitch() {
+                            public void caseAssignStmt(AssignStmt s) {
+                              Value left = s.getLeftOp();
+                              if (left.getType() instanceof RefLikeType) {
+                                SootField instance = CodeGenerator.v().getAverroesInstanceField();
+                                Value field = Jimple.v().newStaticFieldRef(instance.makeRef());
+                                Local local =
+                                    soot.jimple.Jimple.v()
+                                        .newLocal("averroesLib", instance.getType());
+                                m.getActiveBody().getLocals().add(local);
+                                List<Unit> toInsert = new ArrayList();
+                                toInsert.add(Jimple.v().newAssignStmt(local, field));
+                                RefLikeType leftType = (RefLikeType) left.getType();
+                                SootClass cls = Scene.v().getSootClassUnsafe(leftType.toString());
+                                if (cls != null && instrumentedInterfaces.containsKey(cls)) {
+                                  SootClass iface = instrumentedInterfaces.get(cls);
+                                  InstanceFieldRef right =
+                                      Jimple.v()
+                                          .newInstanceFieldRef(
+                                              local,
+                                              CodeGenerator.v()
+                                                  .createAverroesTypedLibraryPointsToField(
+                                                      (RefLikeType) iface.getType())
+                                                  .makeRef());
+
+                                  toInsert.add(Jimple.v().newAssignStmt(left, right));
+                                  units.insertBefore(toInsert, s);
+                                }
+                                units.remove(s);
+                              }
+                            }
+                          });
+                    }
+                  }
+                }
+              });
+        }
+      }
+    }
   }
 }

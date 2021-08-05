@@ -141,10 +141,6 @@ public class Main {
       CodeGenerator.v().createCraftedInterfacesOfEntryPointClasses(entryPointClasses, reader);
       Map<SootClass, Set<SootField>> createObjects = cdetector.getCreateObjects();
       CodeGenerator.v().createObjects(createObjects);
-
-      for (SootClass c : Hierarchy.v().getApplicationClasses())
-        CodeGenerator.v().writeClassFile(Paths.applicationClassesOutputDirectory().getPath(), c);
-
       // Create the Averroes library class
       logger.info("");
       logger.info("Creating the skeleton for Averroes's main library class...");
@@ -153,6 +149,12 @@ public class Main {
       // Create method bodies to the library classes
       logger.info("Generating the method bodies for the placeholder library classes ...");
       CodeGenerator.v().createLibraryMethodBodies();
+
+      if (FrameworkType.SPRING.equals(AverroesOptions.getFrameworkType()))
+        CodeGenerator.v().replaceGetBean(entryPointClasses);
+
+      for (SootClass c : Hierarchy.v().getApplicationClasses())
+        CodeGenerator.v().writeClassFile(Paths.applicationClassesOutputDirectory().getPath(), c);
 
       // Rewrite the Averroes library class
       CodeGenerator.writeClassFile(
