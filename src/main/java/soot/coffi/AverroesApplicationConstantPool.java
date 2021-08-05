@@ -141,10 +141,12 @@ public class AverroesApplicationConstantPool {
       for (cp_info constantPoolEntry : constantPool) {
         if (constantPoolEntry instanceof ICONSTANT_Methodref_info) {
           ICONSTANT_Methodref_info methodInfo = (ICONSTANT_Methodref_info) constantPoolEntry;
-
           // Get the method declaring class
           CONSTANT_Class_info c = (CONSTANT_Class_info) constantPool[methodInfo.getClassIndex()];
-          String className = ((CONSTANT_Utf8_info) (constantPool[c.name_index])).convert();
+          if ( c == null) continue;        
+          CONSTANT_Utf8_info cName = (CONSTANT_Utf8_info) (constantPool[c.name_index]);
+          if (cName == null) continue;      
+          String className = cName.convert();
           className = className.replace('/', '.');
           // TODO why is that?
           if (className.charAt(0) == '[') {

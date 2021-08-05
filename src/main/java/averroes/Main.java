@@ -20,6 +20,8 @@ import averroes.soot.Hierarchy;
 import averroes.util.MathUtils;
 import averroes.util.TimeUtils;
 import averroes.util.io.Paths;
+import fj.data.Option;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -230,6 +232,7 @@ public class Main {
       Options.v().set_keep_line_number(true);
       Options.v().setPhaseOption("jb", "use-original-names:true");
     }
+    Options.v().set_wrong_staticness(Options.wrong_staticness_ignore);
     String rtJar =
         System.getProperty("java.home") + File.separator + "lib" + File.separator + "rt.jar";
     Options.v()
