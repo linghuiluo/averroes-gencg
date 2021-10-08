@@ -644,7 +644,6 @@ public class CodeGenerator {
    */
   public void createLibraryMethodBodies() throws IOException {
     for (SootClass libraryClass : getLibraryClasses()) {
-      if (!libraryClass.isInterface())
         for (SootMethod method : libraryClass.getMethods()) {
           // Create our Jimple body for concrete methods only
           if (method.isConcrete()) {
@@ -1325,6 +1324,10 @@ public class CodeGenerator {
   private String generateCraftedInterfaceName(SootClass cls) {
     // return cls.getName();
     return cls.getName().concat("__GenCG");
+  }
+  
+  private boolean isCraftedInterface(SootClass cls) {
+	  return cls.getName().endsWith("__GenCG");
   }
 
   private SootClass createCraftedInterface(
