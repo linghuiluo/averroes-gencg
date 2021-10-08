@@ -362,9 +362,11 @@ public class ArchiveOrganizer {
   private void extractApplicationClassFile(ZipFile sourceArchive, ZipEntry entry)
       throws IOException {
     String entryName = entry.getName();
-    if (FrameworkType.SPRING.equals(AverroesOptions.getFrameworkType()) && entry.getName().startsWith("BOOT-INF/classes/")) {
-        entryName = entryName.replace("BOOT-INF/classes/", "");
-        extractClassFile(sourceArchive, entry, entryName, organizedApplicationJarFile);
+    if (FrameworkType.SPRING.equals(AverroesOptions.getFrameworkType())) {
+    	if(entry.getName().startsWith("BOOT-INF/classes/")){
+            entryName = entryName.replace("BOOT-INF/classes/", "");
+    	}
+    	extractClassFile(sourceArchive, entry, entryName, organizedApplicationJarFile);
         String className = entryName.replace("/", ".").replace(".class", "");
         applicationClassNames.add(className);
         AverroesOptions.loadApplicationClass(className);

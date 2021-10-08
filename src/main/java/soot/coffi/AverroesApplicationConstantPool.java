@@ -153,19 +153,39 @@ public class AverroesApplicationConstantPool {
             className = "java.lang.Object";
           }
 
-          // Get the method name, parameter types, and return type
-          CONSTANT_NameAndType_info i =
-              (CONSTANT_NameAndType_info) constantPool[methodInfo.getNameAndTypeIndex()];
-          String methodName = ((CONSTANT_Utf8_info) (constantPool[i.name_index])).convert();
-          String methodDescriptor =
-              ((CONSTANT_Utf8_info) (constantPool[i.descriptor_index])).convert();
-          SootMethod method = BytecodeUtils.makeSootMethod(className, methodName, methodDescriptor);
-
-          // If the resolved method is in the library, add it to the
-          // result
-          if (hierarchy.isLibraryMethod(method)) {
-            result.add(method);
+			// Get the method name, parameter types, and return type
+			CONSTANT_NameAndType_info i = (CONSTANT_NameAndType_info) constantPool[methodInfo.getNameAndTypeIndex()];
+			if(i!=null) {
+				
+			CONSTANT_Utf8_info utfMethodName = (CONSTANT_Utf8_info) constantPool[i.name_index];
+			
+			if (utfMethodName != null) {
+				String methodName = utfMethodName.convert();
+				CONSTANT_Utf8_info utfDescriptor = (CONSTANT_Utf8_info) (constantPool[i.descriptor_index]);
+				if (utfDescriptor != null) {
+					String methodDescriptor = utfDescriptor.convert();
+					SootMethod method = BytecodeUtils.makeSootMethod(className, methodName, methodDescriptor);
+					// If the resolved method is in the library, add it to the
+					// result
+					if (hierarchy.isLibraryMethod(method)) {
+						result.add(method);
+					}
+				} else {
+					logger.info("AverroesApplicationConstantPool: couldn't resolve some method in " + className
+							+ " referenced by " + applicationClass+". method descriptor is null.");
+				}
+			}
+          else {
+              logger.info(
+                      "AverroesApplicationConstantPool: couldn't resolve some method in "
+                          + className + " referenced by "+applicationClass+". method name is null.");
           }
+			}else
+			{
+				 logger.info(
+	                      "AverroesApplicationConstantPool: couldn't resolve some method in "
+	                          + className + " referenced by "+applicationClass+". method is null.");
+			}
         }
       }
     }
@@ -345,7 +365,7 @@ public class AverroesApplicationConstantPool {
           if (method != null) result.add(method);
           else
             logger.info(
-                "AverroesApplicationConstantPool: couldn't resolve method "
+                "AverroesApplicationConstantPool (Android): couldn't resolve method "
                     + methodName
                     + " in "
                     + className);
@@ -381,7 +401,10 @@ public class AverroesApplicationConstantPool {
 
           // Get the field declaring class
           CONSTANT_Class_info c = (CONSTANT_Class_info) constantPool[fieldInfo.class_index];
-          String className = ((CONSTANT_Utf8_info) (constantPool[c.name_index])).convert();
+          if(c!=null) {
+          CONSTANT_Utf8_info utfclass =(CONSTANT_Utf8_info) (constantPool[c.name_index]);
+          if(utfclass!=null) {
+          String className = utfclass.convert();
           className = className.replace('/', '.');
           // TODO why is that?
           if (className.charAt(0) == '[') {
@@ -417,6 +440,16 @@ public class AverroesApplicationConstantPool {
           // result
           if (hierarchy.isLibraryField(field)) {
             result.add(field);
+          }
+          }
+          else {
+        	  logger.info(
+                      "AverroesApplicationConstantPool: couldn't resolve the declaring class of some field referenced by "+applicationClass);
+          }
+          }else
+          {
+        	  logger.info(
+                      "AverroesApplicationConstantPool: couldn't resolve some field referenced by "+applicationClass);
           }
         }
       }
