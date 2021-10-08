@@ -46,11 +46,11 @@ public class CHABuilder {
     if (ie instanceof StaticInvokeExpr) {
       targets.add(ie.getMethod());
     } else if (ie instanceof SpecialInvokeExpr) {
-      SootMethod target =
-          VirtualCalls.v()
-              .resolveSpecial(
-                  (SpecialInvokeExpr) ie, ie.getMethodRef().getSubSignature(), container);
-      //  SootMethod target = VirtualCalls.v().resolveSpecial(ie.getMethodRef(), container);
+      //SootMethod target =
+        //  VirtualCalls.v()
+         //     .resolveSpecial(
+          //        (SpecialInvokeExpr) ie, ie.getMethodRef().getSubSignature(), container);
+      SootMethod target = VirtualCalls.v().resolveSpecial(ie.getMethodRef(), container);
       // if the call target resides in a phantom class then "target" will be null;
       // simply do not add the target in that case
       if (target != null) {
@@ -62,9 +62,9 @@ public class CHABuilder {
         Type tpe = RefType.v(clz);
         Type staticType = iie.getBase().getType();
         if (Scene.v().getFastHierarchy().canStoreType(tpe, staticType)) {
-          VirtualCalls.v()
-              .resolve(tpe, staticType, iie.getMethodRef().getSubSignature(), container, targets);
-          // VirtualCalls.v().resolve(tpe, staticType, iie.getMethodRef(), container, targets);
+          //VirtualCalls.v()
+           //   .resolve(tpe, staticType, iie.getMethodRef().getSubSignature(), container, targets);
+          VirtualCalls.v().resolve(tpe, staticType, iie.getMethodRef(), container, targets);
         }
       }
     }
