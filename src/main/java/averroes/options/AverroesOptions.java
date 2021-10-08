@@ -173,7 +173,7 @@ public final class AverroesOptions {
           .hasArg(false)
           .required(false)
           .build();
-  
+
   private static Options options =
       new Options()
           .addOption(applicationRegex)
@@ -229,7 +229,6 @@ public final class AverroesOptions {
     else return Collections.emptyList();
   }
 
-  
   /**
    * The main class that runs the application when the program executes.
    *
@@ -366,25 +365,25 @@ public final class AverroesOptions {
   public static boolean isApplicationClass(ProbeClass probeClass) {
     for (String entry : getApplicationRegex()) {
       if (entry.endsWith(".*")) {
-    	 // 1. If the entry ends with .* then this means it's a package.
-    	  String pkg = entry.replace(".*", "");
+        // 1. If the entry ends with .* then this means it's a package.
+        String pkg = entry.replace(".*", "");
         if (probeClass.pkg().equalsIgnoreCase(pkg)) {
           return true;
         }
       } else if (entry.endsWith(".**")) {
-    	// 2. If the entry  * ends with .** then it's a super package. 
+        // 2. If the entry  * ends with .** then it's a super package.
         String pkg = entry.replace("**", "");
         if (probeClass.toString().startsWith(pkg)) {
           return true;
         }
       } else if (entry.equalsIgnoreCase("**") && probeClass.pkg().isEmpty()) {
-    	// 3. If the entry is **, then it's the default package.   
-    	  
+        // 3. If the entry is **, then it's the default package.
+
         return true;
       } else if (entry.equalsIgnoreCase(probeClass.toString())) {
-    	// 4. Otherwise, it's the full class name.
+        // 4. Otherwise, it's the full class name.
         return true;
-      } 
+      }
     }
     return false;
   }

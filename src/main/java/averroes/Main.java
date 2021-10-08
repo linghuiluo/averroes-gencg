@@ -20,8 +20,6 @@ import averroes.soot.Hierarchy;
 import averroes.util.MathUtils;
 import averroes.util.TimeUtils;
 import averroes.util.io.Paths;
-import fj.data.Option;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;

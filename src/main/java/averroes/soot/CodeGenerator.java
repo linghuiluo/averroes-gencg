@@ -382,11 +382,10 @@ public class CodeGenerator {
                               local, Jimple.v().newNewExpr((RefType) fieldClass.getType()));
                   units.insertBefore(newStmt, returnStmt);
                   SootMethod fieldInit = null;
-                  if(Hierarchy.hasDefaultConstructor(fieldClass)) {
-                		 fieldInit = Hierarchy.getDefaultConstructor(fieldClass);
-                  }
-                  else {
-                	    fieldInit = Hierarchy.getAnyPublicConstructor(fieldClass);
+                  if (Hierarchy.hasDefaultConstructor(fieldClass)) {
+                    fieldInit = Hierarchy.getDefaultConstructor(fieldClass);
+                  } else {
+                    fieldInit = Hierarchy.getAnyPublicConstructor(fieldClass);
                   }
                   SootMethodRef constructorRef =
                       Scene.v().makeConstructorRef(fieldClass, fieldInit.getParameterTypes());

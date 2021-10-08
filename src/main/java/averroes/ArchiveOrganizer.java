@@ -191,7 +191,7 @@ public class ArchiveOrganizer {
   }
 
   private void processExecutableJar(String fileName) {
-	long startTime = System.currentTimeMillis();  
+    long startTime = System.currentTimeMillis();
     // Exit if the fileName is empty
     if (fileName.trim().length() <= 0) {
       return;
@@ -224,10 +224,10 @@ public class ArchiveOrganizer {
               if (!f.exists()) {
                 FileOutputStream fos = new FileOutputStream(f);
                 InputStream is = archive.getInputStream(entry);
-                byte[] buffer = new byte[2048];// Reads up to 2K at a time. 
+                byte[] buffer = new byte[2048]; // Reads up to 2K at a time.
                 int read;
-                while ((read = is.read(buffer)) != -1){
-                	fos.write(buffer, 0, read);
+                while ((read = is.read(buffer)) != -1) {
+                  fos.write(buffer, 0, read);
                 }
                 fos.close();
                 is.close();
@@ -244,7 +244,7 @@ public class ArchiveOrganizer {
     }
     long finishTime = System.currentTimeMillis();
     long timeElapsed = finishTime - startTime;
-    logger.info(timeElapsed+" ms spent for processing executable jar.");
+    logger.info(timeElapsed + " ms spent for processing executable jar.");
   }
 
   /**
@@ -274,12 +274,12 @@ public class ArchiveOrganizer {
 
         while (entries.hasMoreElements()) {
           ZipEntry entry = entries.nextElement();
-          if (entry.getName().endsWith(".class")) {     
+          if (entry.getName().endsWith(".class")) {
             addClass(archive, entry, fromApplicationArchive);
           }
         }
         archive.close();
-        } catch (IOException e) {
+      } catch (IOException e) {
         e.printStackTrace();
         logger.info("Couldn't process " + file.getAbsolutePath());
       }
@@ -315,7 +315,8 @@ public class ArchiveOrganizer {
        * while they're in fact not part of the application and they come from rt.jar
        * (e.g., org.apache.xalan.templates.OutputProperties$1).
        */
-      if ((AverroesOptions.useApplicationRegex()&&AverroesOptions.isApplicationClass(className)) || fromApplicationArchive) {
+      if ((AverroesOptions.useApplicationRegex() && AverroesOptions.isApplicationClass(className))
+          || fromApplicationArchive) {
         extractApplicationClassFile(archive, entry);
       } else {
         extractLibraryClassFile(archive, entry);
@@ -363,13 +364,13 @@ public class ArchiveOrganizer {
       throws IOException {
     String entryName = entry.getName();
     if (FrameworkType.SPRING.equals(AverroesOptions.getFrameworkType())) {
-    	if(entry.getName().startsWith("BOOT-INF/classes/")){
-            entryName = entryName.replace("BOOT-INF/classes/", "");
-    	}
-    	extractClassFile(sourceArchive, entry, entryName, organizedApplicationJarFile);
-        String className = entryName.replace("/", ".").replace(".class", "");
-        applicationClassNames.add(className);
-        AverroesOptions.loadApplicationClass(className);
+      if (entry.getName().startsWith("BOOT-INF/classes/")) {
+        entryName = entryName.replace("BOOT-INF/classes/", "");
+      }
+      extractClassFile(sourceArchive, entry, entryName, organizedApplicationJarFile);
+      String className = entryName.replace("/", ".").replace(".class", "");
+      applicationClassNames.add(className);
+      AverroesOptions.loadApplicationClass(className);
     } else {
       extractClassFile(sourceArchive, entry, entryName, organizedApplicationJarFile);
       String className = entryName.replace("/", ".").replace(".class", "");
