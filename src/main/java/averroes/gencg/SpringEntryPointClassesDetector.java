@@ -9,20 +9,25 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import soot.SootClass;
 import soot.SootField;
+import soot.SootMethod;
 
 public class SpringEntryPointClassesDetector
-    implements AnnotationEntryPointClassDetector, AnnotationCreateObjectsDetector {
+    implements AnnotationEntryPointClassDetector,
+        AnnotationCreateObjectsDetector,
+        AnnotationObjectProvidersDetector {
 
   private static Logger logger = LoggerFactory.getLogger(SpringEntryPointClassesDetector.class);
   protected Hierarchy classHierarchy;
   protected Set<String> SPRING_ENTRYPOINT_CLASSES;
   protected Set<String> SPRING_ENTRYPOINT_METHODS;
   protected Set<String> SPRING_CREATE_OBJECTS;
+  protected Set<String> SPRING_OBJECT_PROVIDERS;
 
   public SpringEntryPointClassesDetector(Hierarchy hierachy, EntryPointConfigurationReader reader) {
     this.classHierarchy = hierachy;
     this.SPRING_ENTRYPOINT_CLASSES = reader.getEntryPointClasses(FrameworkType.SPRING);
     this.SPRING_ENTRYPOINT_METHODS = reader.getEntryPointMethods(FrameworkType.SPRING);
+    this.SPRING_OBJECT_PROVIDERS = reader.getObjectProviders(FrameworkType.SPRING);
     this.SPRING_CREATE_OBJECTS = reader.getCreateObjects(FrameworkType.SPRING);
   }
 
@@ -50,5 +55,10 @@ public class SpringEntryPointClassesDetector
                 + " needs to be initialized.");
     }
     return createObjects;
+  }
+
+  @Override
+  public Map<SootClass, Set<SootMethod>> getObjectProviders() {
+    return null;
   }
 }

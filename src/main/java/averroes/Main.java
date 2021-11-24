@@ -125,50 +125,49 @@ public class Main {
     logger.info("Detecting Entry points");
     EntryPointConfigurationReader reader = new EntryPointConfigurationReader();
 
-    if (!AverroesOptions.isDefaultJavaApplication()) {
-      ClassesDetector cdetector;
-      switch (AverroesOptions.getFrameworkType()) {
-        case FrameworkType.ANDROID:
-          cdetector = new AndroidEntryPointClassesDetector(Hierarchy.v(), reader);
-          break;
-        case FrameworkType.SPRING:
-          cdetector = new SpringEntryPointClassesDetector(Hierarchy.v(), reader);
-          break;
-        default:
-          return;
-      }
-      Map<SootClass, SootClass> entryPointClasses = cdetector.getEntryPointClasses();
-      CodeGenerator.v().createCraftedInterfacesOfEntryPointClasses(entryPointClasses, reader);
-      Map<SootClass, Set<SootField>> createObjects = cdetector.getCreateObjects();
-      CodeGenerator.v().createObjects(createObjects);
-      // Create the Averroes library class
-      logger.info("");
-      logger.info("Creating the skeleton for Averroes's main library class...");
-      CodeGenerator.v().createAverroesLibraryClass();
+    ClassesDetector cdetector;
+    switch (AverroesOptions.getFrameworkType()) {
+      case FrameworkType.ANDROID:
+        cdetector = new AndroidEntryPointClassesDetector(Hierarchy.v(), reader);
+        break;
+      case FrameworkType.SPRING:
+        cdetector = new SpringEntryPointClassesDetector(Hierarchy.v(), reader);
+        break;
+      default:
+        cdetector = new SpringEntryPointClassesDetector(Hierarchy.v(), reader);
+        break;
+    }
+    Map<SootClass, SootClass> entryPointClasses = cdetector.getEntryPointClasses();
+    CodeGenerator.v().createCraftedInterfacesOfEntryPointClasses(entryPointClasses, reader);
+    Map<SootClass, Set<SootField>> createObjects = cdetector.getCreateObjects();
+    CodeGenerator.v().createObjects(createObjects);
+    // Create the Averroes library class
+    logger.info("");
+    logger.info("Creating the skeleton for Averroes's main library class...");
+    CodeGenerator.v().createAverroesLibraryClass();
 
-      // Create method bodies to the library classes
-      logger.info("Generating the method bodies for the placeholder library classes ...");
-      CodeGenerator.v().createLibraryMethodBodies();
+    // Create method bodies to the library classes
+    logger.info("Generating the method bodies for the placeholder library classes ...");
+    CodeGenerator.v().createLibraryMethodBodies();
 
-      if (FrameworkType.SPRING.equals(AverroesOptions.getFrameworkType()))
-        CodeGenerator.v().replaceGetBean(entryPointClasses);
+    if (FrameworkType.SPRING.equals(AverroesOptions.getFrameworkType()))
+      CodeGenerator.v().replaceGetBean(entryPointClasses);
 
-      for (SootClass c : Hierarchy.v().getApplicationClasses())
-        CodeGenerator.v().writeClassFile(Paths.applicationClassesOutputDirectory().getPath(), c);
+    for (SootClass c : Hierarchy.v().getApplicationClasses())
+      CodeGenerator.v().writeClassFile(Paths.applicationClassesOutputDirectory().getPath(), c);
 
-      // Rewrite the Averroes library class
-      CodeGenerator.writeClassFile(
-          Paths.libraryClassesOutputDirectory().getPath(),
-          CodeGenerator.v().getAverroesAbstractLibraryClass());
+    // Rewrite the Averroes library class
+    CodeGenerator.writeClassFile(
+        Paths.libraryClassesOutputDirectory().getPath(),
+        CodeGenerator.v().getAverroesAbstractLibraryClass());
 
-      if (AverroesOptions.includeJavaLibraryClass()) {
-        // Create empty classes for the basic classes required internally by
-        // Soot
-        logger.info("Generating empty basic library classes required by Soot...");
-        for (SootClass basicClass :
-            Hierarchy.v().getBasicClassesDatabase().getMissingBasicClasses()) {
-          CodeGenerator.writeClassFile(Paths.libraryClassesOutputDirectory().getPath(), basicClass);
-        }
+    if (AverroesOptions.includeJavaLibraryClass()) {
+      // Create empty classes for the basic classes required internally by
+      // Soot
+      logger.info("Generating empty basic library classes required by Soot...");
+      for (SootClass basicClass :
+          Hierarchy.v().getBasicClassesDatabase().getMissingBasicClasses()) {
+        CodeGenerator.writeClassFile(Paths.libraryClassesOutputDirectory().getPath(), basicClass);
       }
     }
   }

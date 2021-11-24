@@ -68,7 +68,7 @@ public final class AverroesOptions {
   private static Option frameworkType =
       Option.builder("f")
           .longOpt("framework-type")
-          .desc("the type of framework the application uses")
+          .desc("the type of framework the application uses. Values: ANDROID, SPRING, DEFAULT")
           .hasArg()
           .argName("type")
           .required(false)
@@ -125,10 +125,11 @@ public final class AverroesOptions {
       Option.builder("j")
           .longOpt("java-runtime-directory")
           .desc(
-              "the directory that contains the Java runtime environment that Averroes should model")
+              "the directory that contains the Java runtime environment that Averroes should model. "
+                  + "By default, it takes from the path reads from the system property java.home")
           .hasArg()
           .argName("directory")
-          .required()
+          .required(false)
           .build();
 
   private static Option help =
@@ -157,10 +158,10 @@ public final class AverroesOptions {
           .required(false)
           .build();
 
-  private static Option configEntryPoints =
+  private static Option configFiles =
       Option.builder("c")
           .longOpt("config")
-          .desc("the directory that containt the entry point configuration files.")
+          .desc("the directory that contains the configuration files.")
           .hasArg(true)
           .argName("directory")
           .required(false)
@@ -187,7 +188,7 @@ public final class AverroesOptions {
           .addOption(jreDirectory)
           .addOption(help)
           .addOption(enableGuards)
-          .addOption(configEntryPoints)
+          .addOption(configFiles)
           .addOption(noInstrumentation)
           .addOption(includeJavaLibraryClass);
 
@@ -352,7 +353,8 @@ public final class AverroesOptions {
    * @return
    */
   public static String getJreDirectory() {
-    return cmd.getOptionValue(jreDirectory.getOpt());
+    String value = cmd.getOptionValue(jreDirectory.getOpt(), "system");
+    return value;
   }
 
   /**
@@ -439,7 +441,8 @@ public final class AverroesOptions {
   }
 
   public static boolean isAndroidApk() {
-    return cmd.getOptionValue(frameworkType.getOpt()).equals(FrameworkType.ANDROID.toString());
+    String value = cmd.getOptionValue(frameworkType.getOpt(), "DEFAULT");
+    return FrameworkType.ANDROID.equals(value);
   }
 
   public static boolean isDefaultJavaApplication() {
@@ -469,23 +472,26 @@ public final class AverroesOptions {
 
   public static String getEntryPointClasses() {
     String config = "config";
-    if (cmd.hasOption(configEntryPoints.getOpt()))
-      config = cmd.getOptionValue(configEntryPoints.getOpt());
+    if (cmd.hasOption(configFiles.getOpt())) config = cmd.getOptionValue(configFiles.getOpt());
     return config + File.separator + "EntryPointClasses.txt";
   }
 
   public static String getEntryPointMethods() {
     String config = "config";
-    if (cmd.hasOption(configEntryPoints.getOpt()))
-      config = cmd.getOptionValue(configEntryPoints.getOpt());
+    if (cmd.hasOption(configFiles.getOpt())) config = cmd.getOptionValue(configFiles.getOpt());
     return config + File.separator + "EntryPointMethods.txt";
   }
 
   public static String getCreateObjects() {
     String config = "config";
-    if (cmd.hasOption(configEntryPoints.getOpt()))
-      config = cmd.getOptionValue(configEntryPoints.getOpt());
+    if (cmd.hasOption(configFiles.getOpt())) config = cmd.getOptionValue(configFiles.getOpt());
     return config + File.separator + "CreateObjects.txt";
+  }
+
+  public static String objectsProviders() {
+    String config = "config";
+    if (cmd.hasOption(configFiles.getOpt())) config = cmd.getOptionValue(configFiles.getOpt());
+    return config + File.separator + "ObjectProviders.txt";
   }
 
   public static boolean noInstrumetation() {

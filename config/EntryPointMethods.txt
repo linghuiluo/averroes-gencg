@@ -1,3 +1,4 @@
+% Entry Point Method Annotations
 org.springframework.web.bind.annotation.GetMapping _SPRING_
 org.springframework.web.bind.annotation.PostMapping _SPRING_
 org.springframework.web.bind.annotation.DeleteMapping _SPRING_
@@ -10,3 +11,4 @@ org.springframework.beans.factory.annotation.Autowired _SPRING_
 javax.inject.Inject _SPRING_
 javax.annotation.Resource _SPRING_
 org.springframework.messaging.handler.annotation.MessageMapping _SPRING_
+com.google.inject.Inject _SPRING_

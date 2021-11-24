@@ -151,7 +151,7 @@ public class ArchiveOrganizer {
    * @param dir
    */
   private void processJreArchives(String dir) {
-    logger.info("Process JRE " + dir);
+    logger.info("Processing JRE " + dir);
     File directory = new File(dir);
     org.apache.commons.io.filefilter.IOFileFilter nameFilter =
         FileFilterUtils.or(
@@ -261,7 +261,7 @@ public class ArchiveOrganizer {
     }
 
     File file = new File(fileName);
-    logger.debug(
+    logger.info(
         "Processing "
             + (fromApplicationArchive ? "application" : "library")
             + " archive: "

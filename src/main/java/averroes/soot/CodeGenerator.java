@@ -644,13 +644,13 @@ public class CodeGenerator {
    */
   public void createLibraryMethodBodies() throws IOException {
     for (SootClass libraryClass : getLibraryClasses()) {
-        for (SootMethod method : libraryClass.getMethods()) {
-          // Create our Jimple body for concrete methods only
-          if (method.isConcrete()) {
-            createJimpleBody(method);
-            method.setPhantom(false);
-          }
+      for (SootMethod method : libraryClass.getMethods()) {
+        // Create our Jimple body for concrete methods only
+        if (method.isConcrete()) {
+          createJimpleBody(method);
+          method.setPhantom(false);
         }
+      }
       if (AverroesOptions.includeJavaLibraryClass()) {
         writeClassFile(Paths.libraryClassesOutputDirectory().getPath(), libraryClass);
       } else {
@@ -1323,11 +1323,11 @@ public class CodeGenerator {
    */
   private String generateCraftedInterfaceName(SootClass cls) {
     // return cls.getName();
-    return cls.getName().concat("__GenCG");
+    return cls.getName().concat("_GenCG");
   }
-  
+
   private boolean isCraftedInterface(SootClass cls) {
-	  return cls.getName().endsWith("__GenCG");
+    return cls.getName().endsWith("_GenCG");
   }
 
   private SootClass createCraftedInterface(

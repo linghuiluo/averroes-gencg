@@ -8,3 +8,6 @@ output/
 .classpath
 .project
 /target/
+.DS_Store
+.run/Main.run.xml
+averroes-gencg.iml

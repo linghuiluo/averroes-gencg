@@ -1,0 +1,2 @@
+com.google.inject.Provides _SPRING_
+org.springframework.context.annotation.Bean _SPRING_

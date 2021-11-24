@@ -20,14 +20,17 @@ public class EntryPointConfigurationReader {
   private HashMap<String, Set<String>> entryPointClasses;
   private HashMap<String, Set<String>> entryPointMethods;
   private HashMap<String, Set<String>> createObjects;
+  private HashMap<String, Set<String>> objectProviders;
 
   public EntryPointConfigurationReader() {
     String epClassPath = AverroesOptions.getEntryPointClasses();
     String epMethodPath = AverroesOptions.getEntryPointMethods();
     String createObjectsPath = AverroesOptions.getCreateObjects();
+    String objectProvidersPath = AverroesOptions.objectsProviders();
     entryPointClasses = read(epClassPath);
     entryPointMethods = read(epMethodPath);
     createObjects = read(createObjectsPath);
+    objectProviders = read(objectProvidersPath);
   }
 
   private HashMap<String, Set<String>> read(String path) {
@@ -66,5 +69,9 @@ public class EntryPointConfigurationReader {
 
   public Set<String> getCreateObjects(String frameworkType) {
     return this.createObjects.get(frameworkType);
+  }
+
+  public Set<String> getObjectProviders(String frameworkType) {
+    return this.objectProviders.get(frameworkType);
   }
 }

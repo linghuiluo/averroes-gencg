@@ -20,6 +20,7 @@ import pxb.android.axml.AxmlVisitor;
 import pxb.android.axml.NodeVisitor;
 import soot.SootClass;
 import soot.SootField;
+import soot.SootMethod;
 
 /** @author Linghui Luo */
 public class AndroidEntryPointClassesDetector implements SubTypingEntryPointClassDetector {
@@ -114,6 +115,11 @@ public class AndroidEntryPointClassesDetector implements SubTypingEntryPointClas
 
   @Override
   public Map<SootClass, Set<SootField>> getCreateObjects() {
+    return Collections.emptyMap();
+  }
+
+  @Override
+  public Map<SootClass, Set<SootMethod>> getObjectProviders() {
     return Collections.emptyMap();
   }
 }

@@ -1,3 +1,5 @@
+% Field Annotations
 org.springframework.beans.factory.annotation.Autowired _SPRING_
 javax.inject.Inject _SPRING_
 javax.annotation.Resource _SPRING_
+com.google.inject.Inject _SPRING_
