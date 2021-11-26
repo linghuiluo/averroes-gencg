@@ -101,8 +101,8 @@ public class Hierarchy {
   private int removedLibraryFieldCount;
 
   /**
-   * Initialize the hierarchy with all the classes resolved at the level {@link
-   * ResolvingLevel.#SIGNATURES} from the Soot scene. Averroes is only interested in those classes
+   * Initialize the hierarchy with all the classes resolved at the level {@link ResolvingLevel#SIGNATURES
+   * from the Soot scene. Averroes is only interested in those classes
    * so it doesn't make sense to include any more classes.
    */
   private Hierarchy() {
@@ -1779,7 +1779,7 @@ public class Hierarchy {
   }
 
   /**
-   * Check if the given class is resolved at least at the level {@link ResolvingLevel.#SIGNATURES}.
+   * Check if the given class is resolved at least at the level {@link ResolvingLevel#SIGNATURES}.
    *
    * @param cls
    */
@@ -1878,7 +1878,7 @@ public class Hierarchy {
    * Cleanup the tag list of a library class. There's no need for tags/annotations in a placeholder
    * library.
    *
-   * @param libraryMethod
+   * @param libraryClass
    */
   private void cleanupLibraryClassTags(SootClass libraryClass) {
     Set<String> toRemove = new HashSet<String>();
@@ -1940,7 +1940,7 @@ public class Hierarchy {
   /**
    * Check if it is safe to remove the given library method from its class.
    *
-   * @param libraryField
+   * @param libraryMethod
    * @return
    */
   private boolean isLibraryMethodRemovable(SootMethod libraryMethod) {

@@ -516,7 +516,7 @@ public class AverroesJimpleBody {
    *
    * @param stmt
    */
-  private void insertStmt(Stmt stmt) {
+  public void insertStmt(Stmt stmt) {
     stmt.apply(
         new AbstractStmtSwitch() {
           @Override

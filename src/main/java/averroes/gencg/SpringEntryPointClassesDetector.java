@@ -2,9 +2,12 @@ package averroes.gencg;
 
 import averroes.FrameworkType;
 import averroes.soot.Hierarchy;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import soot.SootClass;
@@ -14,7 +17,7 @@ import soot.SootMethod;
 public class SpringEntryPointClassesDetector
     implements AnnotationEntryPointClassDetector,
         AnnotationCreateObjectsDetector,
-        AnnotationObjectProvidersDetector {
+        ObjectProvidersDetector {
 
   private static Logger logger = LoggerFactory.getLogger(SpringEntryPointClassesDetector.class);
   protected Hierarchy classHierarchy;
@@ -34,7 +37,11 @@ public class SpringEntryPointClassesDetector
   @Override
   public Map<SootClass, SootClass> getEntryPointClasses() {
     Map<SootClass, SootClass> epClasses =
-        getEntryPointClasses(classHierarchy, SPRING_ENTRYPOINT_CLASSES, SPRING_ENTRYPOINT_METHODS);
+        getEntryPointClasses(
+            classHierarchy,
+            SPRING_ENTRYPOINT_CLASSES,
+            SPRING_ENTRYPOINT_METHODS,
+            SPRING_OBJECT_PROVIDERS);
     for (SootClass c : epClasses.keySet()) {
       logger.info("Detected entry point class: " + c.getName());
     }
@@ -59,6 +66,19 @@ public class SpringEntryPointClassesDetector
 
   @Override
   public Map<SootClass, Set<SootMethod>> getObjectProviders() {
-    return null;
+    // sort the providers according the priorities. A is dependent on B: B has higher priority than
+    // A.
+    SortedMap<SootClass, Set<SootMethod>> sortedObjectProviders =
+        new TreeMap<SootClass, Set<SootMethod>>(
+            new Comparator<SootClass>() {
+              @Override
+              public int compare(SootClass o1, SootClass o2) {
+                return priorities.get(o2.getType()) - priorities.get(o1.getType());
+              }
+            });
+    for (SootClass c : objectProviders.keySet()) {
+      sortedObjectProviders.put(c, objectProviders.get(c));
+    }
+    return sortedObjectProviders;
   }
 }

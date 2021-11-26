@@ -109,12 +109,15 @@ public class CodeGenerator {
 
   private HashMap<SootClass, SootClass>
       instrumentedInterfaces; // (original class, its instrumented interface)
+  private Map<SootClass, Set<SootMethod>> objectProviders = null;
 
   /** Create a new code generator with the given class Cleanup.v(). */
   private CodeGenerator() {
     libraryInterfaceToConcreteImplementationClass = new HashMap<SootClass, SootClass>();
     abstractLibraryClassToConcreteImplementationClass = new HashMap<SootClass, SootClass>();
-    instrumentedInterfaces = new HashMap<SootClass, SootClass>();
+    instrumentedInterfaces = new HashMap<>();
+    entryPointClasses = new HashMap<>();
+    objectProviders = new HashMap<>();
     generatedMethodCount = 0;
     generatedClassCount = 0;
     initialize();
@@ -425,19 +428,15 @@ public class CodeGenerator {
             VoidType.v(),
             Modifier.PUBLIC | Modifier.STATIC);
     averroesLibraryClass.addMethod(mainMethod);
-    JimpleBody body = Jimple.v().newBody(mainMethod);
-    LocalGenerator localGenerator = new LocalGenerator(body);
-    body.getUnits()
-        .add(
-            Jimple.v()
-                .newIdentityStmt(
-                    localGenerator.generateLocal(type), Jimple.v().newParameterRef(type, 0)));
+    AverroesJimpleBody body = new AverroesJimpleBody(mainMethod);
+
+    LocalGenerator localGenerator = new LocalGenerator(body.getJimpleBody());
 
     // load AbstractLibrary instance
     SootField aInstance = CodeGenerator.v().getAverroesInstanceField();
     Value field = Jimple.v().newStaticFieldRef(aInstance.makeRef());
     Local ins = localGenerator.generateLocal(aInstance.getType());
-    body.getUnits().add(Jimple.v().newAssignStmt(ins, field));
+    addUnit(body.getJimpleBody(), Jimple.v().newAssignStmt(ins, field));
 
     HashMap<SootClass, Local> localForClasses = new HashMap<>();
     for (SootClass klass : entryPointClasses.keySet()) {
@@ -467,11 +466,11 @@ public class CodeGenerator {
                   .getSootClassUnsafe(
                       klass.getName().substring(0, klass.getName().lastIndexOf("$")))
               : null;
-      body.getUnits()
-          .add(
-              Jimple.v()
-                  .newAssignStmt(
-                      localForClasses.get(klass), Jimple.v().newNewExpr(klass.getType())));
+      // TODO: replace addUnit with methods from AverroesJimpleBody directly
+      addUnit(
+          body.getJimpleBody(),
+          Jimple.v()
+              .newAssignStmt(localForClasses.get(klass), Jimple.v().newNewExpr(klass.getType())));
 
       for (SootMethod method : klass.getMethods()) {
         if (method.getName().equals(SootMethod.constructorName)) {
@@ -496,13 +495,12 @@ public class CodeGenerator {
                 args.add(NullConstant.v());
               }
           }
-          body.getUnits()
-              .add(
-                  Jimple.v()
-                      .newInvokeStmt(
-                          Jimple.v()
-                              .newSpecialInvokeExpr(
-                                  localForClasses.get(klass), constructorRef, args)));
+          addUnit(
+              body.getJimpleBody(),
+              Jimple.v()
+                  .newInvokeStmt(
+                      Jimple.v()
+                          .newSpecialInvokeExpr(localForClasses.get(klass), constructorRef, args)));
           Local classLocal = localForClasses.get(klass);
           Set<SootClass> parents = new HashSet<>();
           parents.add(entryPointClasses.get(klass));
@@ -516,7 +514,7 @@ public class CodeGenerator {
                 Jimple.v()
                     .newAssignStmt(
                         Jimple.v().newInstanceFieldRef(ins, typedLPT.makeRef()), classLocal);
-            body.getUnits().add(storeStmt);
+            addUnit(body.getJimpleBody(), storeStmt);
           }
         }
       }
@@ -563,7 +561,7 @@ public class CodeGenerator {
             }
           }
           if (stmts.size() >= 3) {
-            body.getUnits().addAll(stmts);
+            for (Unit s : stmts) addUnit(body.getJimpleBody(), s);
           }
         }
       }
@@ -571,39 +569,77 @@ public class CodeGenerator {
     // 1. The library can point to any concrete (i.e., not an interface nor
     // abstract) library class
     for (SootClass cls : getConcreteLibraryClasses()) {
-      List<Stmt> stmts = new ArrayList<>();
-      Local classLocal = localGenerator.generateLocal(cls.getType());
-      stmts.add(Jimple.v().newAssignStmt(classLocal, Jimple.v().newNewExpr(cls.getType())));
-      SootMethod init = Hierarchy.v().getAnyPublicConstructor(cls);
-      if (init != null && init.getName().equals(SootMethod.constructorName)) {
-        SootMethodRef constructorRef = Scene.v().makeConstructorRef(cls, init.getParameterTypes());
-        List<Value> args = new ArrayList<>();
-        for (Type p : constructorRef.getParameterTypes()) {
-          if (isSimpleType(p.toString())) args.add(getSimpleDefaultValue(p));
-          else {
-            args.add(NullConstant.v());
-          }
-        }
-        stmts.add(
-            Jimple.v()
-                .newInvokeStmt(Jimple.v().newSpecialInvokeExpr(classLocal, constructorRef, args)));
-        SootField typedLPT =
-            CodeGenerator.v().createAverroesTypedLibraryPointsToField(cls.getType());
-        stmts.add(
-            Jimple.v()
-                .newAssignStmt(
-                    Jimple.v().newInstanceFieldRef(ins, typedLPT.makeRef()), classLocal));
-        if (stmts.size() == 3) {
-          body.getUnits().addAll(stmts);
-        }
+      List<Stmt> stmts = initializeClass(cls, localGenerator, ins);
+      if (stmts.size() == 3) {
+        for (Unit s : stmts) addUnit(body.getJimpleBody(), s);
       }
     }
-    // Add return statement
-    body.getUnits().addLast(Jimple.v().newReturnVoidStmt());
-    // Finally validate the Jimple body
-    body.validate();
+    // create beans
+    for (SootClass cls : objectProviders.keySet()) {
 
-    mainMethod.setActiveBody(body);
+      for (SootMethod provider : objectProviders.get(cls)) {
+        SootClass providerCls = provider.getDeclaringClass();
+        List<Stmt> stmts = initializeClass(providerCls, localGenerator, ins);
+        Stmt last = stmts.get(stmts.size() - 1);
+        Local base = localGenerator.generateLocal(cls.getType());
+        stmts.add(Jimple.v().newAssignStmt(base, last.getDefBoxes().get(0).getValue()));
+        for (Stmt s : stmts) {
+          addUnit(body.getJimpleBody(), s);
+        }
+        // TODO. add predicate around the invoke statement
+        SootMethodRef methodRef = provider.makeRef();
+        List<Value> args = body.prepareActualArguments(provider);
+        InvokeExpr invokeExpr = Jimple.v().newVirtualInvokeExpr(base, methodRef, args);
+        Local ret = body.newLocal(provider.getReturnType());
+        body.getInvokeReturnVariables().add(ret);
+        body.insertAssignmentStatement(ret, invokeExpr, false);
+        SootField typedLPT =
+            CodeGenerator.v().createAverroesTypedLibraryPointsToField((RefLikeType) ret.getType());
+        addUnit(
+            body.getJimpleBody(),
+            Jimple.v().newAssignStmt(Jimple.v().newInstanceFieldRef(ins, typedLPT.makeRef()), ret));
+      }
+    }
+
+    // Add return statement
+    addUnit(body.getJimpleBody(), Jimple.v().newReturnVoidStmt());
+    // Finally validate the Jimple body
+    body.getJimpleBody().validate();
+
+    mainMethod.setActiveBody(body.getJimpleBody());
+  }
+
+  private List<Stmt> initializeClass(
+      SootClass cls, LocalGenerator localGenerator, Local abstractlibraryInstance) {
+    List<Stmt> stmts = new ArrayList<>();
+    Local classLocal = localGenerator.generateLocal(cls.getType());
+    stmts.add(Jimple.v().newAssignStmt(classLocal, Jimple.v().newNewExpr(cls.getType())));
+    SootMethod init = Hierarchy.v().getAnyPublicConstructor(cls);
+    if (init != null && init.getName().equals(SootMethod.constructorName)) {
+      SootMethodRef constructorRef = Scene.v().makeConstructorRef(cls, init.getParameterTypes());
+      List<Value> args = new ArrayList<>();
+      for (Type p : constructorRef.getParameterTypes()) {
+        if (isSimpleType(p.toString())) args.add(getSimpleDefaultValue(p));
+        else {
+          args.add(NullConstant.v());
+        }
+      }
+      stmts.add(
+          Jimple.v()
+              .newInvokeStmt(Jimple.v().newSpecialInvokeExpr(classLocal, constructorRef, args)));
+      SootField typedLPT = CodeGenerator.v().createAverroesTypedLibraryPointsToField(cls.getType());
+      stmts.add(
+          Jimple.v()
+              .newAssignStmt(
+                  Jimple.v().newInstanceFieldRef(abstractlibraryInstance, typedLPT.makeRef()),
+                  classLocal));
+    }
+    return stmts;
+  }
+
+  private void addUnit(JimpleBody body, Unit unit) {
+    // System.out.println(unit.toString());
+    body.getUnits().add(unit);
   }
 
   protected boolean isSimpleType(String t) {
@@ -750,19 +786,19 @@ public class CodeGenerator {
 
     // Call superclass constructor
     body.insertIdentityStmts();
-    body.getUnits()
-        .add(
-            Jimple.v()
-                .newInvokeStmt(
-                    Jimple.v()
-                        .newSpecialInvokeExpr(
-                            body.getThisLocal(),
-                            Hierarchy.getDefaultConstructor(Hierarchy.v().getJavaLangObject())
-                                .makeRef(),
-                            Collections.emptyList())));
+    addUnit(
+        body,
+        Jimple.v()
+            .newInvokeStmt(
+                Jimple.v()
+                    .newSpecialInvokeExpr(
+                        body.getThisLocal(),
+                        Hierarchy.getDefaultConstructor(Hierarchy.v().getJavaLangObject())
+                            .makeRef(),
+                        Collections.emptyList())));
 
     // Add return statement
-    body.getUnits().addLast(Jimple.v().newReturnVoidStmt());
+    addUnit(body, Jimple.v().newReturnVoidStmt());
 
     // Finally validate the Jimple body
     body.validate();
@@ -829,18 +865,18 @@ public class CodeGenerator {
 
     // Call superclass constructor
     body.insertIdentityStmts();
-    body.getUnits()
-        .add(
-            Jimple.v()
-                .newInvokeStmt(
-                    Jimple.v()
-                        .newSpecialInvokeExpr(
-                            body.getThisLocal(),
-                            Hierarchy.getDefaultConstructor(averroesAbstractLibraryClass).makeRef(),
-                            Collections.emptyList())));
+    addUnit(
+        body,
+        Jimple.v()
+            .newInvokeStmt(
+                Jimple.v()
+                    .newSpecialInvokeExpr(
+                        body.getThisLocal(),
+                        Hierarchy.getDefaultConstructor(averroesAbstractLibraryClass).makeRef(),
+                        Collections.emptyList())));
 
     // Add return statement
-    body.getUnits().addLast(Jimple.v().newReturnVoidStmt());
+    addUnit(body, Jimple.v().newReturnVoidStmt());
 
     // Eliminate Nops
     NopEliminator.v().transform(body);
@@ -1416,7 +1452,7 @@ public class CodeGenerator {
    * Get the concrete version of an abstract method. This way Averroes will create a method body for
    * it. This is important for implementing interface methods, and extending abstract classes.
    *
-   * @param libraryMethod
+   * @param method
    * @return
    */
   private SootMethod getConcreteMethod(SootMethod method) {
@@ -1512,7 +1548,7 @@ public class CodeGenerator {
     if (toRemove != null) units.remove(toRemove);
   }
 
-  public void replaceGetBean(Map<SootClass, SootClass> entryPointClasses) {
+  public void replaceBeanRetrieval() {
     for (SootClass cl : Scene.v().getApplicationClasses()) {
       for (SootMethod m : cl.getMethods()) {
         if (!m.hasActiveBody()) continue;
@@ -1523,8 +1559,7 @@ public class CodeGenerator {
           unit.apply(
               new AbstractStmtSwitch() {
                 public void caseAssignStmt(AssignStmt stmt) {
-                  if (stmt.containsInvokeExpr()
-                      && stmt.getInvokeExpr().getMethodRef().getName().equals("getBean")) {
+                  if (stmt.containsInvokeExpr() && isBeanRetrieval(stmt)) {
                     units.remove(stmt);
                     Unit nextUnit;
                     if (iter.hasNext()) {
@@ -1544,8 +1579,9 @@ public class CodeGenerator {
                                 toInsert.add(Jimple.v().newAssignStmt(local, field));
                                 RefLikeType leftType = (RefLikeType) left.getType();
                                 SootClass cls = Scene.v().getSootClassUnsafe(leftType.toString());
-                                if (cls != null && instrumentedInterfaces.containsKey(cls)) {
+                                if (cls != null) {
                                   SootClass iface = instrumentedInterfaces.get(cls);
+                                  if (iface == null) iface = cls;
                                   InstanceFieldRef right =
                                       Jimple.v()
                                           .newInstanceFieldRef(
@@ -1565,9 +1601,18 @@ public class CodeGenerator {
                     }
                   }
                 }
+
+                private boolean isBeanRetrieval(AssignStmt stmt) {
+                  String name = stmt.getInvokeExpr().getMethodRef().getName();
+                  return name.equals("getBean") || name.equals("getInstance");
+                }
               });
         }
       }
     }
+  }
+
+  public void setObjectProviders(Map<SootClass, Set<SootMethod>> objectProviders) {
+    this.objectProviders = objectProviders;
   }
 }

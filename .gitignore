@@ -11,3 +11,4 @@ output/
 .DS_Store
 .run/Main.run.xml
 averroes-gencg.iml
+src/main/java/RunSoot.java

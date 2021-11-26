@@ -21,3 +21,9 @@
 -o <path to ouput folder> 
 -l <path to android platform jars> 
 ~~~
+
+# TODOS
+-   implement more precise mapping of beans based on the key values
+-   implement random if statement around the calls to providers in Library.main
+-  (done) implement ObjectProvidersDetector
+-  (done) resolve dependencies @Bean @Provides

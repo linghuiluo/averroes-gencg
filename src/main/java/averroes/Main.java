@@ -36,6 +36,7 @@ import soot.PackManager;
 import soot.Scene;
 import soot.SootClass;
 import soot.SootField;
+import soot.SootMethod;
 import soot.options.Options;
 
 /**
@@ -139,8 +140,12 @@ public class Main {
     }
     Map<SootClass, SootClass> entryPointClasses = cdetector.getEntryPointClasses();
     CodeGenerator.v().createCraftedInterfacesOfEntryPointClasses(entryPointClasses, reader);
+
     Map<SootClass, Set<SootField>> createObjects = cdetector.getCreateObjects();
     CodeGenerator.v().createObjects(createObjects);
+
+    Map<SootClass, Set<SootMethod>> objectProviders = cdetector.getObjectProviders();
+    CodeGenerator.v().setObjectProviders(objectProviders);
     // Create the Averroes library class
     logger.info("");
     logger.info("Creating the skeleton for Averroes's main library class...");
@@ -150,8 +155,8 @@ public class Main {
     logger.info("Generating the method bodies for the placeholder library classes ...");
     CodeGenerator.v().createLibraryMethodBodies();
 
-    if (FrameworkType.SPRING.equals(AverroesOptions.getFrameworkType()))
-      CodeGenerator.v().replaceGetBean(entryPointClasses);
+    if (!FrameworkType.ANDROID.equals(AverroesOptions.getFrameworkType()))
+      CodeGenerator.v().replaceBeanRetrieval();
 
     for (SootClass c : Hierarchy.v().getApplicationClasses())
       CodeGenerator.v().writeClassFile(Paths.applicationClassesOutputDirectory().getPath(), c);
