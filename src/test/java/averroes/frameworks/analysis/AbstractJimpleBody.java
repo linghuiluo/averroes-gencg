@@ -19,6 +19,7 @@ import soot.ArrayType;
 import soot.DoubleType;
 import soot.FloatType;
 import soot.Local;
+import soot.LocalGenerator;
 import soot.LongType;
 import soot.NullType;
 import soot.PrimType;
@@ -34,7 +35,7 @@ import soot.TrapManager;
 import soot.Type;
 import soot.Value;
 import soot.VoidType;
-import soot.javaToJimple.LocalGenerator;
+import soot.javaToJimple.DefaultLocalGenerator;
 import soot.jimple.AbstractStmtSwitch;
 import soot.jimple.AnyNewExpr;
 import soot.jimple.ArrayRef;
@@ -121,7 +122,7 @@ public abstract class AbstractJimpleBody {
     this.method = method;
     originalBody = (JimpleBody) method.retrieveActiveBody();
     body = Jimple.v().newBody(method);
-    localGenerator = new LocalGenerator(body);
+    localGenerator = new DefaultLocalGenerator(body);
 
     casts = new HashMap<>();
 
@@ -1149,7 +1150,7 @@ public abstract class AbstractJimpleBody {
 
   /**
    * Find the compatible value to the given Soot type. If it's a primary type, a constant is
-   * returned. Otherwise, the methods returns a cast of {@link setToCast()} to the given type. In
+   * returned. Otherwise, the methods returns a cast of {@link AbstractJimpleBody#setToCast()}} to the given type. In
    * the case that the cast is to the same type as the class declaring this method, then return the
    * {@code this} variable. This is used in calls to the constructors of anonymous classes, as well
    * as accessing fields in the same class.

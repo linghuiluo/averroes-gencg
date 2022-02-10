@@ -369,13 +369,15 @@ public class ArchiveOrganizer {
       }
       extractClassFile(sourceArchive, entry, entryName, organizedApplicationJarFile);
       String className = entryName.replace("/", ".");
-      className = className.substring(0, className.length() - 6);;
+      className = className.substring(0, className.length() - 6);
+      ;
       applicationClassNames.add(className);
       AverroesOptions.loadApplicationClass(className);
     } else {
       extractClassFile(sourceArchive, entry, entryName, organizedApplicationJarFile);
       String className = entryName.replace("/", ".");
-      className = className.substring(0, className.length() - 6);;
+      className = className.substring(0, className.length() - 6);
+      ;
       applicationClassNames.add(className);
       AverroesOptions.loadApplicationClass(className);
     }

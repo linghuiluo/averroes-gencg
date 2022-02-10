@@ -43,6 +43,7 @@ import soot.DoubleType;
 import soot.FloatType;
 import soot.IntType;
 import soot.Local;
+import soot.LocalGenerator;
 import soot.LongType;
 import soot.Modifier;
 import soot.RefLikeType;
@@ -63,7 +64,7 @@ import soot.baf.Baf;
 import soot.baf.BafASMBackend;
 import soot.baf.SpecialInvokeInst;
 import soot.dava.internal.javaRep.DIntConstant;
-import soot.javaToJimple.LocalGenerator;
+import soot.javaToJimple.DefaultLocalGenerator;
 import soot.jimple.AbstractStmtSwitch;
 import soot.jimple.AssignStmt;
 import soot.jimple.CmpExpr;
@@ -430,7 +431,7 @@ public class CodeGenerator {
     averroesLibraryClass.addMethod(mainMethod);
     AverroesJimpleBody body = new AverroesJimpleBody(mainMethod);
 
-    LocalGenerator localGenerator = new LocalGenerator(body.getJimpleBody());
+    LocalGenerator localGenerator = new DefaultLocalGenerator(body.getJimpleBody());
 
     // load AbstractLibrary instance
     SootField aInstance = CodeGenerator.v().getAverroesInstanceField();
