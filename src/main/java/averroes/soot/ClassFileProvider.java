@@ -125,7 +125,8 @@ public class ClassFileProvider {
         stream.close();
       }
     }
-    String className = path.replace('/', '.').replace(".class", "");
+    String className = path.replace('/', '.');
+    className = className.substring(0, className.length() - 6);
     classFiles.put(className, c);
     return className;
   }

@@ -587,6 +587,8 @@ public class CodeGenerator {
           addUnit(body.getJimpleBody(), s);
         }
         // TODO. add predicate around the invoke statement
+        body.insertRandomAssignment();
+        NopStmt ifStmt = body.insertGuardCondition();
         SootMethodRef methodRef = provider.makeRef();
         List<Value> args = body.prepareActualArguments(provider);
         InvokeExpr invokeExpr = Jimple.v().newVirtualInvokeExpr(base, methodRef, args);
@@ -598,6 +600,7 @@ public class CodeGenerator {
         addUnit(
             body.getJimpleBody(),
             Jimple.v().newAssignStmt(Jimple.v().newInstanceFieldRef(ins, typedLPT.makeRef()), ret));
+        body.getJimpleBody().getUnits().add(ifStmt);
       }
     }
 
