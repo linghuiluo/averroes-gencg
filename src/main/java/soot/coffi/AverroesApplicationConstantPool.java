@@ -152,7 +152,6 @@ public class AverroesApplicationConstantPool {
           if (className.charAt(0) == '[') {
             className = "java.lang.Object";
           }
-
           // Get the method name, parameter types, and return type
           CONSTANT_NameAndType_info i =
               (CONSTANT_NameAndType_info) constantPool[methodInfo.getNameAndTypeIndex()];
@@ -422,11 +421,13 @@ public class AverroesApplicationConstantPool {
                 className = "java.lang.Object";
               }
               SootClass cls = Scene.v().getSootClass(className);
-
               // Get the field name, and type
               CONSTANT_NameAndType_info i =
                   (CONSTANT_NameAndType_info) constantPool[fieldInfo.name_and_type_index];
-              String fieldName = ((CONSTANT_Utf8_info) (constantPool[i.name_index])).convert();
+              if (i == null) continue;
+              cp_info info = constantPool[i.name_index];
+              if (info == null) continue;
+              String fieldName = ((CONSTANT_Utf8_info) (info)).convert();
               String fieldDescriptor =
                   ((CONSTANT_Utf8_info) (constantPool[i.descriptor_index])).convert();
               Type fieldType = Util.v().jimpleTypeOfFieldDescriptor(fieldDescriptor);

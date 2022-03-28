@@ -12,6 +12,7 @@ package averroes;
 import averroes.options.AverroesOptions;
 import averroes.util.io.Paths;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -26,6 +27,7 @@ import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.jf.dexlib2.iface.ClassDef;
@@ -102,6 +104,7 @@ public class ArchiveOrganizer {
   public void organizeInputJarFiles() throws ZipException, IOException {
     // clean up
     Paths.deleteDirectory(AverroesOptions.getOutputDirectory() + File.separator + "lib");
+    Paths.deleteDirectory(Paths.applicationUnpackedOutputDirectory().toString());
     libraryClassPath.addAll(AverroesOptions.getLibraryClassPath());
     processApplicationFiles();
     processDependencies();
@@ -267,11 +270,12 @@ public class ArchiveOrganizer {
             + " archive: "
             + file.getAbsolutePath());
     if (file.getName().endsWith(".jar")) {
-
+      if (fromApplicationArchive) {
+        unzip(file.getAbsolutePath(), Paths.applicationUnpackedOutputDirectory());
+      }
       try {
         ZipFile archive = new ZipFile(file);
         Enumeration<? extends ZipEntry> entries = archive.entries();
-
         while (entries.hasMoreElements()) {
           ZipEntry entry = entries.nextElement();
           if (entry.getName().endsWith(".class")) {
@@ -286,6 +290,44 @@ public class ArchiveOrganizer {
     }
   }
 
+  private void unzip(String zipFilePath, File dir) {
+    // create output directory if it doesn't exist
+    if (!dir.exists()) dir.mkdirs();
+    FileInputStream fis;
+    // buffer for read and write data to file
+    byte[] buffer = new byte[1024];
+    try {
+      fis = new FileInputStream(zipFilePath);
+      ZipInputStream zis = new ZipInputStream(fis);
+      ZipEntry ze = zis.getNextEntry();
+      while (ze != null) {
+        String fileName = ze.getName();
+        File newFile = new File(dir.getAbsolutePath() + File.separator + fileName);
+        if (ze.isDirectory()) {
+          // create directories for sub directories in zip
+          newFile.mkdirs();
+        } else {
+          new File(newFile.getParent()).mkdirs();
+          FileOutputStream fos = new FileOutputStream(newFile);
+          int len;
+          while ((len = zis.read(buffer)) > 0) {
+            fos.write(buffer, 0, len);
+          }
+          fos.close();
+          // close this ZipEntry
+          zis.closeEntry();
+        }
+        ze = zis.getNextEntry();
+      }
+      // close last ZipEntry
+      zis.closeEntry();
+      zis.close();
+      fis.close();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
   /**
    * Determine whether the given class file will be added to the list of application or library
    * class files depending on the AverroesProperties file.
@@ -297,7 +339,9 @@ public class ArchiveOrganizer {
    */
   private void addClass(ZipFile archive, ZipEntry entry, boolean fromApplicationArchive)
       throws IOException {
-    String className = entry.getName().replace('/', '.').replace(".class", "");
+    String className = entry.getName().replace("/", ".");
+    className = className.substring(0, className.length() - 6);
+    ;
 
     if (classNames.contains(className)) {
       /*
@@ -370,14 +414,12 @@ public class ArchiveOrganizer {
       extractClassFile(sourceArchive, entry, entryName, organizedApplicationJarFile);
       String className = entryName.replace("/", ".");
       className = className.substring(0, className.length() - 6);
-      ;
       applicationClassNames.add(className);
       AverroesOptions.loadApplicationClass(className);
     } else {
       extractClassFile(sourceArchive, entry, entryName, organizedApplicationJarFile);
       String className = entryName.replace("/", ".");
       className = className.substring(0, className.length() - 6);
-      ;
       applicationClassNames.add(className);
       AverroesOptions.loadApplicationClass(className);
     }

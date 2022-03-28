@@ -1150,10 +1150,10 @@ public abstract class AbstractJimpleBody {
 
   /**
    * Find the compatible value to the given Soot type. If it's a primary type, a constant is
-   * returned. Otherwise, the methods returns a cast of {@link AbstractJimpleBody#setToCast()}} to the given type. In
-   * the case that the cast is to the same type as the class declaring this method, then return the
-   * {@code this} variable. This is used in calls to the constructors of anonymous classes, as well
-   * as accessing fields in the same class.
+   * returned. Otherwise, the methods returns a cast of {@link AbstractJimpleBody#setToCast()}} to
+   * the given type. In the case that the cast is to the same type as the class declaring this
+   * method, then return the {@code this} variable. This is used in calls to the constructors of
+   * anonymous classes, as well as accessing fields in the same class.
    *
    * @param type
    * @return

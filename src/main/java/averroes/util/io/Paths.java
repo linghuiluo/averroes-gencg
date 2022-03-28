@@ -143,6 +143,9 @@ public class Paths {
     return new File(classesOutputDirectory(), "app");
   }
 
+  public static File applicationUnpackedOutputDirectory() {
+    return new File(AverroesOptions.getOutputDirectory(), "unpacked");
+  }
   /**
    * The path to the placeholder library JAR file.
    *

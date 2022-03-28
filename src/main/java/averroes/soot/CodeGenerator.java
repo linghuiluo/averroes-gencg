@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -111,6 +112,7 @@ public class CodeGenerator {
   private HashMap<SootClass, SootClass>
       instrumentedInterfaces; // (original class, its instrumented interface)
   private Map<SootClass, Set<SootMethod>> objectProviders = null;
+  public static Set<String> instrumentedClasses;
 
   /** Create a new code generator with the given class Cleanup.v(). */
   private CodeGenerator() {
@@ -119,6 +121,7 @@ public class CodeGenerator {
     instrumentedInterfaces = new HashMap<>();
     entryPointClasses = new HashMap<>();
     objectProviders = new HashMap<>();
+    instrumentedClasses = new HashSet<>();
     generatedMethodCount = 0;
     generatedClassCount = 0;
     initialize();
@@ -145,10 +148,18 @@ public class CodeGenerator {
     String fileName = SourceLocator.v().getFileNameFor(cls, Options.output_format_class);
     File file = new File(fileName);
     file.getParentFile().mkdirs();
+
     OutputStream streamOut = new FileOutputStream(fileName);
-    BafASMBackend backend = new BafASMBackend(cls, java_version);
-    backend.generateClassFile(streamOut);
-    streamOut.close();
+    try {
+      BafASMBackend backend = new BafASMBackend(cls, java_version);
+      backend.generateClassFile(streamOut);
+
+    } catch (Exception e) {
+      streamOut.close();
+      Files.deleteIfExists(file.toPath());
+      System.out.println("Could not generate class " + cls.getName());
+      e.printStackTrace();
+    }
   }
 
   /**
@@ -1594,11 +1605,16 @@ public class CodeGenerator {
                                                   .createAverroesTypedLibraryPointsToField(
                                                       (RefLikeType) iface.getType())
                                                   .makeRef());
-
-                                  toInsert.add(Jimple.v().newAssignStmt(left, right));
+                                  Local temp =
+                                      soot.jimple.Jimple.v().newLocal("temp", right.getType());
+                                  m.getActiveBody().getLocals().add(temp);
+                                  toInsert.add(Jimple.v().newAssignStmt(temp, right));
+                                  toInsert.add(Jimple.v().newAssignStmt(left, temp));
                                   units.insertBefore(toInsert, s);
                                 }
                                 units.remove(s);
+                                instrumentedClasses.add(cl.getName());
+                                System.out.println("Instrumenting " + cl.getName());
                               }
                             }
                           });
