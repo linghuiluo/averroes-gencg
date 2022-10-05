@@ -1,5 +1,6 @@
 % Class Annotations
 android.app.Activity _ANDROID_
+android.app.ListActivity _ANDROID_
 android.app.Service _ANDROID_
 android.content.BroadcastReceiver _ANDROID_
 android.content.ContentProvider _ANDROID_

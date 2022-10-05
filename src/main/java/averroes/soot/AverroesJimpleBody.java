@@ -1052,6 +1052,7 @@ public class AverroesJimpleBody {
     insertAssignmentStatement(generateNewGuard(), compare, false);
   }
 
+
   Deque<Local> guards = new ArrayDeque<Local>();
 
   public Local generateNewGuard() {

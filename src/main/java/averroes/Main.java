@@ -141,6 +141,7 @@ public class Main {
         break;
     }
     Map<SootClass, SootClass> entryPointClasses = cdetector.getEntryPointClasses();
+    logger.info("Total entry point classes: " + cdetector.getEntryPointClasses().size());
     CodeGenerator.v().createCraftedInterfacesOfEntryPointClasses(entryPointClasses, reader);
 
     Map<SootClass, Set<SootField>> createObjects = cdetector.getCreateObjects();
@@ -162,24 +163,28 @@ public class Main {
     }
 
     for (SootClass c : Hierarchy.v().getApplicationClasses()) {
-      if (CodeGenerator.v().instrumentedClasses.contains(c.getName())) {
+      if (FrameworkType.ANDROID.equals(AverroesOptions.getFrameworkType())) {
         CodeGenerator.v().writeClassFile(Paths.applicationClassesOutputDirectory().getPath(), c);
       } else {
-        String filePath =
-            Paths.applicationUnpackedOutputDirectory().getAbsolutePath()
-                + File.separator
-                + c.getName().replace(".", File.separator);
-        File file = new File(filePath + ".class");
-        String tgtPath =
-            file.getAbsolutePath()
-                .replace(
-                    Paths.applicationUnpackedOutputDirectory().getPath(),
-                    Paths.applicationClassesOutputDirectory().getPath());
-        if (file.exists()) {
-          File tgt = new File(tgtPath);
-          System.out.println("copy from " + file.getAbsolutePath() + " to " + tgtPath);
-          tgt.getParentFile().mkdirs();
-          Files.copy(file.toPath(), tgt.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        if (CodeGenerator.v().instrumentedClasses.contains(c.getName())) {
+          CodeGenerator.v().writeClassFile(Paths.applicationClassesOutputDirectory().getPath(), c);
+        } else {
+          String filePath =
+              Paths.applicationUnpackedOutputDirectory().getAbsolutePath()
+                  + File.separator
+                  + c.getName().replace(".", File.separator);
+          File file = new File(filePath + ".class");
+          String tgtPath =
+              file.getAbsolutePath()
+                  .replace(
+                      Paths.applicationUnpackedOutputDirectory().getPath(),
+                      Paths.applicationClassesOutputDirectory().getPath());
+          if (file.exists()) {
+            File tgt = new File(tgtPath);
+            System.out.println("copy from " + file.getAbsolutePath() + " to " + tgtPath);
+            tgt.getParentFile().mkdirs();
+            Files.copy(file.toPath(), tgt.toPath(), StandardCopyOption.REPLACE_EXISTING);
+          }
         }
       }
     }

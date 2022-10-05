@@ -69,9 +69,9 @@ public class ArchiveOrganizer {
     applicationClassNames = new HashSet<String>();
     libraryClassNames = new HashSet<String>();
     libraryClassPath = new ArrayList<>();
-    if (!AverroesOptions.isAndroidApk())
+    if (!AverroesOptions.isAndroidApk()) {
       organizedApplicationJarFile = new JarFile(Paths.organizedApplicationJarFile());
-    else jarFile = new JarOutputStream(new FileOutputStream(Paths.organizedApplicationJarFile()));
+    }
     organizedLibraryJarFile = new JarFile(Paths.organizedLibraryJarFile());
   }
 
@@ -130,7 +130,12 @@ public class ArchiveOrganizer {
         break;
       default:
         AverroesOptions.getApplicationClassPath().forEach(jar -> processArchive(jar, true));
-        return;
+        break;
+    }
+    if (!FrameworkType.ANDROID.equals(AverroesOptions.getFrameworkType())) {
+      unzip(
+          Paths.organizedApplicationJarFile().getAbsolutePath(),
+          Paths.applicationUnpackedOutputDirectory());
     }
   }
 
@@ -203,7 +208,6 @@ public class ArchiveOrganizer {
     File file = new File(fileName);
     if (file.getName().endsWith(".jar")) {
       logger.info("Processing executable jar: " + file.getAbsolutePath());
-
       try {
         ZipFile archive = new ZipFile(file);
         Enumeration<? extends ZipEntry> entries = archive.entries();
@@ -270,9 +274,6 @@ public class ArchiveOrganizer {
             + " archive: "
             + file.getAbsolutePath());
     if (file.getName().endsWith(".jar")) {
-      if (fromApplicationArchive) {
-        unzip(file.getAbsolutePath(), Paths.applicationUnpackedOutputDirectory());
-      }
       try {
         ZipFile archive = new ZipFile(file);
         Enumeration<? extends ZipEntry> entries = archive.entries();

@@ -41,6 +41,7 @@ import soot.BooleanType;
 import soot.ByteType;
 import soot.CharType;
 import soot.DoubleType;
+import soot.EntryPoints;
 import soot.FloatType;
 import soot.IntType;
 import soot.Local;
@@ -471,6 +472,8 @@ public class CodeGenerator {
         });
 
     for (SootClass klass : epClasses) {
+        body.insertRandomAssignment();
+        NopStmt ifStmt = body.insertGuardCondition();
       boolean isInnerClass = klass.getName().contains("$");
       SootClass outerClass =
           isInnerClass
@@ -516,10 +519,11 @@ public class CodeGenerator {
           Local classLocal = localForClasses.get(klass);
           Set<SootClass> parents = new HashSet<>();
           parents.add(entryPointClasses.get(klass));
-          parents.addAll(Hierarchy.v().getSuperclassesOf(klass));
-          parents.addAll(Hierarchy.v().getSuperinterfacesOf(klass));
+          // parents.addAll(Hierarchy.v().getSuperclassesOf(klass));
+          // parents.addAll(Hierarchy.v().getSuperinterfacesOf(klass));
           for (SootClass parent : parents) {
             if (parent.getName().equals(Names.JAVA_LANG_OBJECT)) continue;
+
             SootField typedLPT =
                 CodeGenerator.v().createAverroesTypedLibraryPointsToField(parent.getType());
             AssignStmt storeStmt =
@@ -529,7 +533,9 @@ public class CodeGenerator {
             addUnit(body.getJimpleBody(), storeStmt);
           }
         }
+
       }
+        body.insertStmt(ifStmt);
     }
     for (SootClass cls : Hierarchy.v().getApplicationClasses()) {
       if (skipClass(cls.getName())) continue;
@@ -580,7 +586,10 @@ public class CodeGenerator {
     }
     // 1. The library can point to any concrete (i.e., not an interface nor
     // abstract) library class
-    for (SootClass cls : getConcreteLibraryClasses()) {
+    Set<SootClass> concreteClasses = getConcreteLibraryClasses();
+    concreteClasses.removeAll(entryPointClasses.values());// remove entry point classes' super class.
+    for (SootClass cls : concreteClasses) {
+      if (skipClass(cls.getName())) continue;
       List<Stmt> stmts = initializeClass(cls, localGenerator, ins);
       if (stmts.size() == 3) {
         for (Unit s : stmts) addUnit(body.getJimpleBody(), s);
@@ -588,7 +597,6 @@ public class CodeGenerator {
     }
     // create beans
     for (SootClass cls : objectProviders.keySet()) {
-
       for (SootMethod provider : objectProviders.get(cls)) {
         SootClass providerCls = provider.getDeclaringClass();
         List<Stmt> stmts = initializeClass(providerCls, localGenerator, ins);
@@ -615,7 +623,11 @@ public class CodeGenerator {
         body.getJimpleBody().getUnits().add(ifStmt);
       }
     }
-
+    // call application main method
+    List<SootMethod> mainMethods = EntryPoints.v().mainsOfApplicationClasses();
+    for (SootMethod m : mainMethods) {
+      body.insertStaticInvokeStatement(m);
+    }
     // Add return statement
     addUnit(body.getJimpleBody(), Jimple.v().newReturnVoidStmt());
     // Finally validate the Jimple body
@@ -768,8 +780,9 @@ public class CodeGenerator {
 
   /** Initialize the code generator by creating the concrete implementation classes. */
   private void initialize() {
-    implementLibraryInterfacesNotImplementedInLibrary();
-    implementAbstractLibraryClassesNotImplementedInLibrary();
+    // FIXME. Don't generate concrete implementation
+    // implementLibraryInterfacesNotImplementedInLibrary();
+    // implementAbstractLibraryClassesNotImplementedInLibrary();
   }
 
   /** Implement any library interface that is not implemented in the library. */
@@ -997,7 +1010,6 @@ public class CodeGenerator {
   private boolean isEntryPointSuperClass(SootClass c) {
     boolean isEntryPointClass = false;
     for (SootClass e : entryPointClasses.keySet()) {
-      // FIXME. Spring entry point class always returns false
       if (!c.getName().startsWith("java."))
         isEntryPointClass = Hierarchy.v().isConcreteSubclassOf(e, c);
       if (isEntryPointClass) {
@@ -1008,8 +1020,9 @@ public class CodeGenerator {
   }
 
   private boolean skipClass(String classSignature) {
-    if (classSignature.startsWith("java.") || classSignature.startsWith("android.support."))
-      return true;
+    if (classSignature.startsWith("java.")
+        || classSignature.startsWith("android.support.")
+        || classSignature.startsWith("jdk.")) return true;
     return false;
   }
   /**
@@ -1019,7 +1032,7 @@ public class CodeGenerator {
     Map<SootClass, Set<SootMethod>> allMethodsToCall = getAllMethodsToCallReflectively();
     NopStmt loop = doItAllBody.insertOuterLoopStartStmt();
     for (SootClass c : allMethodsToCall.keySet()) {
-      if (skipClass(c.getName())) continue;
+      if (entryPointClasses.containsKey(c)) continue;
       boolean addGuard = false;
       addGuard = isEntryPointSuperClass(c);
       NopStmt outerIfStmt = null;
@@ -1028,14 +1041,23 @@ public class CodeGenerator {
         outerIfStmt = doItAllBody.insertGuardCondition();
       }
       NopStmt outerLoopStartStmt = null;
-      // if the class is an entryp point class type such as an Activity, add a loop
+      // if the class is an entrypoint class type such as an Activity, add a loop
       if (addGuard) {
         outerLoopStartStmt = doItAllBody.insertOuterLoopStartStmt();
       }
       // Prepare the method base
       Local base = (Local) doItAllBody.getCompatibleValue(c.getType());
       boolean alreadyAdded = true;
-      for (SootMethod toCall : allMethodsToCall.get(c)) {
+
+       Set<SootMethod> methodsToCall = allMethodsToCall.get(c);
+        // c get all methods from its superclasses.
+        if (Hierarchy.v().getSuperclassesOf(c)!=null) {
+            Hierarchy.v().getSuperclassesOf(c).forEach(parent -> {
+                if(allMethodsToCall.containsKey(parent))
+                methodsToCall.addAll(allMethodsToCall.get(parent));
+            });
+        }
+      for (SootMethod toCall : methodsToCall) {
         SootMethodRef methodRef = toCall.makeRef();
         if (!alreadyAdded) {
           doItAllBody.AddAssignToLPT(base);
@@ -1103,6 +1125,7 @@ public class CodeGenerator {
     }
     return ret;
   }
+
 
   /** Create objects for application classes if the library knows their name constants. */
   private void createObjectsFromApplicationClassNames() {
@@ -1399,6 +1422,8 @@ public class CodeGenerator {
     }
     entryPointClass.addInterface(iface);
     Hierarchy.v().addGeneratedInterface(entryPointClass, iface);
+    instrumentedClasses.add(entryPointClass.getName());
+    instrumentedClasses.add(iface.getName());
     return iface;
   }
 
@@ -1534,6 +1559,8 @@ public class CodeGenerator {
         instrumentedInterfaces.put(c, iface);
         replaceInvokeToSuperclassConstructor(c, iface);
         entryPointClasses.replace(c, iface);
+        instrumentedClasses.add(c.getName());
+        instrumentedClasses.add(iface.getName());
       }
     }
   }

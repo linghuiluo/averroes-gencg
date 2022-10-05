@@ -1599,7 +1599,8 @@ public class Hierarchy {
         } else if (cls.isInterface()) {
           libraryInterfaces.add(cls);
         } else {
-          concreteLibraryClasses.add(cls);
+          if (!cls.getName().startsWith("java.") && !cls.getName().startsWith("sun."))
+            concreteLibraryClasses.add(cls);
         }
       }
     }
@@ -2019,6 +2020,7 @@ public class Hierarchy {
     libraryInterfaces.add(iface);
     librarySuperMethodsOfApplicationMethods.addAll(iface.getMethods());
     libraryMethodCount += libraryMethodCount + iface.getMethodCount();
+    getConcreteSubclassesOf(iface).add(c);
   }
 
   public void addAnnotatedApplicationMethods(SootMethod m) {

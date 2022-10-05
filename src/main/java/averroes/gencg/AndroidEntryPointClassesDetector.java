@@ -47,7 +47,7 @@ public class AndroidEntryPointClassesDetector implements SubTypingEntryPointClas
             .collect(Collectors.toMap(x -> x.getKey(), x -> x.getValue()));
 
     for (SootClass androidClass : ret.keySet()) {
-      logger.info("Detected entry point class: " + androidClass.getName());
+      logger.info("Detected entry point class: {} -> {}", androidClass.getName(), ret.get(androidClass));
     }
     return ret;
   }
