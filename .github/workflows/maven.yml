@@ -31,10 +31,11 @@ jobs:
            mvn install -DskipTests
     - name: Install local lib
       run: |
-           cd /home/runner/work/averroes-gencg/libs
+           pwd
+           cd /home/runner/work/averroes-gencg/averroes-gencg/libs
            ./install.sh
     - name: Build with Maven
       run: |
-           cd /home/runner/work/averroes-gencg
+           cd /home/runner/work/averroes-gencg/averroes-gencg
            mvn install -DskipTests
         
