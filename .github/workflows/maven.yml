@@ -27,7 +27,7 @@ jobs:
            cd /home/runner/work/
            git clone https://github.com/soot-oss/soot.git
            cd soot
-           git checkout -b fe86c3e7
+           git checkout -b fe86c3e73d9b7bcd810dadd2aa81351d4288642d
            mvn install -DskipTests
     - name: Install local lib
       run: |
