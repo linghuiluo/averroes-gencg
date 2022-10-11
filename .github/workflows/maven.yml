@@ -33,6 +33,7 @@ jobs:
       run: |
            pwd
            cd /home/runner/work/averroes-gencg/averroes-gencg/libs
+           sudo chmod +x install.sh
            ./install.sh
     - name: Build with Maven
       run: |
