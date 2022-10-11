@@ -24,12 +24,12 @@ public interface SubTypingEntryPointClassDetector extends ClassesDetector {
             c -> {
               if (AverroesOptions.isLoadedApplicationClass(c.getName())) {
                 c.addTag(sTag);
-                if(ret.containsKey(c)) {
-                    if (classHierarchy.isSubclassOf(epClass, ret.get(c))) {
-                        ret.put(c, epClass);
-                    }
-                } else {
+                if (ret.containsKey(c)) {
+                  if (classHierarchy.isSubclassOf(epClass, ret.get(c))) {
                     ret.put(c, epClass);
+                  }
+                } else {
+                  ret.put(c, epClass);
                 }
               }
             });

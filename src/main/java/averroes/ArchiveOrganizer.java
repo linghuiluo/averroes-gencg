@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import soot.dexpler.DexFileProvider;
 import soot.dexpler.DexFileProvider.DexContainer;
+import soot.options.Options;
 
 /**
  * Utility class to organize the input JAR files to Averroes into two JAR files only: one for the
@@ -177,6 +178,7 @@ public class ArchiveOrganizer {
    * @param apk
    */
   private void processApk(String apk) {
+    Options.v().set_process_multiple_dex(true);
     try {
       File apkFile = new File(apk);
 

@@ -141,7 +141,7 @@ public class Main {
         break;
     }
     Map<SootClass, SootClass> entryPointClasses = cdetector.getEntryPointClasses();
-    logger.info("Total entry point classes: " + cdetector.getEntryPointClasses().size());
+    logger.info("Total entry point classes: " + entryPointClasses.size());
     CodeGenerator.v().createCraftedInterfacesOfEntryPointClasses(entryPointClasses, reader);
 
     Map<SootClass, Set<SootField>> createObjects = cdetector.getCreateObjects();

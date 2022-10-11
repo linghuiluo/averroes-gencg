@@ -29,6 +29,7 @@ import soot.DoubleType;
 import soot.FloatType;
 import soot.IntegerType;
 import soot.Local;
+import soot.LocalGenerator;
 import soot.LongType;
 import soot.PrimType;
 import soot.RefLikeType;
@@ -77,6 +78,7 @@ public class AverroesJimpleBody {
   private Set<Local> invokeReturnVariables;
   private LocalVariableNumberer numberer;
   private Map<Type, Local> lptCastToType;
+  private LocalGenerator localGenerator;
 
   /**
    * Construct a new Jimple body for an Averroes library method.
@@ -1052,7 +1054,6 @@ public class AverroesJimpleBody {
     insertAssignmentStatement(generateNewGuard(), compare, false);
   }
 
-
   Deque<Local> guards = new ArrayDeque<Local>();
 
   public Local generateNewGuard() {
@@ -1080,5 +1081,13 @@ public class AverroesJimpleBody {
                       .makeRef());
       insertStmt(Jimple.v().newAssignStmt(base, right));
     }
+  }
+
+  public void setLocalGenerator(LocalGenerator localGenerator) {
+    this.localGenerator = localGenerator;
+  }
+
+  public LocalGenerator getLocalGenerator() {
+    return this.localGenerator;
   }
 }
