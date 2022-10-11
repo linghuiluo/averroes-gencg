@@ -22,6 +22,14 @@ jobs:
         java-version: '8'
         distribution: 'temurin'
         cache: maven
+    - name: Check out soot
+      run: |
+           git clone https://github.com/soot-oss/soot.git
+           git checkout -b 8f2b2023bbfae062d153216f779839f5eceb695a
+    - name: Install local lib
+      run: |
+           ./install.sh
     - name: Build with Maven
       run: |
            mvn install -DskipTests
+        
