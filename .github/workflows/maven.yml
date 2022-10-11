@@ -39,4 +39,7 @@ jobs:
       run: |
            cd /home/runner/work/averroes-gencg/averroes-gencg
            mvn install -DskipTests
-        
+    - uses: actions/upload-artifact@v2
+      with:
+        name: averroes-gencg-0.0.1-jar-with-dependencies
+        path: /home/runner/work/averroes-gencg/averroes-gencg/target/averroes-gencg-0.0.1-jar-with-dependencies.jar
