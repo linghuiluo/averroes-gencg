@@ -101,6 +101,10 @@ public class Main {
 
       double total = TimeUtils.elapsedSplitTime();
       logger.info("Elapsed time: " + total + " seconds.");
+      logger.info("Generated jars: ");
+      logger.info(Paths.placeholderLibraryJarFile().getAbsolutePath().toString());
+      logger.info(Paths.averroesLibraryClassJarFile().getAbsolutePath().toString());
+      logger.info(Paths.instrumentedApplicationJarFile().getAbsolutePath().toString());
     } catch (Exception e) {
       e.printStackTrace();
     }

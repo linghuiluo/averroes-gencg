@@ -648,8 +648,8 @@ public class CodeGenerator {
         Local classLocal = localForClasses.get(klass);
         Set<SootClass> parents = new HashSet<>();
         parents.add(entryPointClasses.get(klass));
-        // parents.addAll(Hierarchy.v().getSuperclassesOf(klass));
-        // parents.addAll(Hierarchy.v().getSuperinterfacesOf(klass));
+        parents.addAll(Hierarchy.v().getSuperclassesOf(klass));
+        parents.addAll(Hierarchy.v().getSuperinterfacesOf(klass));
         for (SootClass parent : parents) {
           if (parent.getName().equals(Names.JAVA_LANG_OBJECT)) continue;
 
