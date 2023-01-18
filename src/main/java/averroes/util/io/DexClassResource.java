@@ -5,6 +5,7 @@ import java.io.InputStream;
 import org.jf.dexlib2.dexbacked.DexBackedDexFile;
 import org.jf.dexlib2.iface.ClassDef;
 
+/** @author Linghui Luo */
 public class DexClassResource implements Resource {
 
   private File apkFile;

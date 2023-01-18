@@ -14,6 +14,7 @@ import soot.SootClass;
 import soot.SootField;
 import soot.SootMethod;
 
+/** @author Linghui Luo */
 public class SpringEntryPointClassesDetector
     implements AnnotationEntryPointClassDetector,
         AnnotationCreateObjectsDetector,

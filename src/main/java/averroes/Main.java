@@ -44,7 +44,7 @@ import soot.options.Options;
 /**
  * The main Averroes class.
  *
- * @author Karim Ali
+ * @author Karim Ali, Linghui Luo
  */
 public class Main {
 

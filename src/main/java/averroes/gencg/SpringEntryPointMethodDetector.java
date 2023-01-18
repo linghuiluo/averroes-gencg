@@ -5,6 +5,7 @@ import java.util.Set;
 import soot.SootClass;
 import soot.SootMethod;
 
+/** @author Linghui Luo */
 public class SpringEntryPointMethodDetector implements AnnotationEntryPointMethodDetector {
 
   private Set<String> classSignatures;

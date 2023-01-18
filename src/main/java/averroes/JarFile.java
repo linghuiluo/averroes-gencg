@@ -50,7 +50,7 @@ import soot.SootMethod;
  * A JAR file is a collection of class files. We use BCEL to verify that the generated JAR files
  * conforms to the JVM standards.
  *
- * @author karim
+ * @author karim, Linghui Luo
  */
 public class JarFile {
 

@@ -45,7 +45,7 @@ import soot.options.Options;
  * files in any way, it's merely copying the class files into these temporary JAR files for
  * convenience.
  *
- * @author karim
+ * @author karim, Linghui Luo
  */
 public class ArchiveOrganizer {
 

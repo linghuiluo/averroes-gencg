@@ -1,5 +1,6 @@
 package averroes.soot;
 
+/** @author Linghui Luo */
 public class NonFilterClasses {
   private static String[] classes = {"java.lang.Math", "java.lang.Runnable", "java.lang.Thread"};
 

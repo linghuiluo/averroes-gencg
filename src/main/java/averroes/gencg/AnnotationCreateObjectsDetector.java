@@ -10,6 +10,7 @@ import soot.SootField;
 import soot.tagkit.AnnotationTag;
 import soot.tagkit.VisibilityAnnotationTag;
 
+/** @author Linghui Luo */
 public interface AnnotationCreateObjectsDetector extends CreateObjectsDetector {
   default Map<SootClass, Set<SootField>> getCreateObjects(
       Hierarchy classHierarchy, Set<String> classSignatures) {

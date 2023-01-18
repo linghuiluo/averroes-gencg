@@ -8,6 +8,7 @@ import soot.SootMethod;
 import soot.tagkit.AnnotationTag;
 import soot.tagkit.VisibilityAnnotationTag;
 
+/** @author Linghui Luo */
 public interface AnnotationEntryPointMethodDetector extends EntryPointMethodsDetector {
 
   default List<SootMethod> getEntryPointMethods(SootClass cl, Set<String> classSignatures) {

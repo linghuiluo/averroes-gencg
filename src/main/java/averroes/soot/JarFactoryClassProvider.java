@@ -39,7 +39,7 @@ import soot.coffi.ClassFile;
  * <p>This class provider adds a class once. Any consequent additions will throw an exception
  * because each class should be encountered only once.
  *
- * @author karim
+ * @author karim, Linghui Luo
  */
 public class JarFactoryClassProvider implements ClassProvider {
 

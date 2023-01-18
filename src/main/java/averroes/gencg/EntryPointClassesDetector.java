@@ -3,6 +3,7 @@ package averroes.gencg;
 import java.util.Map;
 import soot.SootClass;
 
+/** @author Linghui Luo */
 public interface EntryPointClassesDetector {
 
   /**

@@ -34,7 +34,7 @@ import soot.tagkit.Tag;
 /**
  * A representation of the class hierarchy Averroes uses for the input program.
  *
- * @author Karim Ali
+ * @author Karim Ali, Linghui Luo
  */
 public class Hierarchy {
 

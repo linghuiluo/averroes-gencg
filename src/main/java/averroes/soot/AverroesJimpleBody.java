@@ -69,7 +69,7 @@ import soot.util.Chain;
  * A representation of the {@link JimpleBody} Averroes generates for all the placeholder library
  * methods.
  *
- * @author Karim Ali
+ * @author Karim Ali, Linghui Luo
  */
 public class AverroesJimpleBody {
   protected static IntConstant ARRAY_LENGTH = IntConstant.v(1);
