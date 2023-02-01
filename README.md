@@ -42,11 +42,15 @@ cd ..
 mvn install -DskipTests
 ```
 
+
 ### Auto-format Code
 ```
 mvn com.coveo:fmt-maven-plugin:format 
 ```
-# Publication 
-**Long-term Static Analysis Rule Quality Monitoring Using True Negatives**, 14/05/2023 - 20/05/2023, 45th International Conference on Software Engineering, Software Engineering in Practice (SEIP) Track, Melbourne, Australia.
 
-Linghui Luo, Rajdeep Mukherjee, Omer Tripp, Martin Schäf, Qiang Zhou, Daniel Sanchez
+# Publication 
+**Model Generation For Java Frameworks**, 16/04/2023 - 20/04/2023, The 16th IEEE International Conference on Software Testing, Verification and Validation (ICST) 2023, Dublin, Ireland.
+
+Linghui Luo, Goran Piskachev, Ranjith Krishnamurthy, Julian Dolby, Eric Bodden, Martin Schäf
+
+Credit: this tool is based on [averroes](https://github.com/themaplelab/averroes).
