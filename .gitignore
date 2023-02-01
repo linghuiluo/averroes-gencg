@@ -12,6 +12,6 @@ output/
 .run/Main.run.xml
 averroes-gencg.iml
 src/main/java/RunSoot.java
-/output-apk/
 *.cfg
-platforms
+/androidOutput/
+/springOutput/

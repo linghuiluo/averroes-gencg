@@ -1,8 +1,8 @@
 # GenCG
 ## Usage
-- Make sure you have at least Java 8 installed.
+- Make sure you have Java 8 installed. Java 9+ does not work, as `rt.jar` is removed.
 - Download the latest build artifact `averroes-gencg-0.0.1-jar-with-dependencies.jar` from the [releases](https://github.com/linghuiluo/averroes-gencg/releases) page. 
-### Generate Model For Android Apps
+### 1. Generate Model For Android Apps
 Run the following command:
 ```
 java -jar averroes-gencg-0.0.1-jar-with-dependencies.jar -f ANDROID -j system
@@ -13,17 +13,17 @@ java -jar averroes-gencg-0.0.1-jar-with-dependencies.jar -f ANDROID -j system
 - `$CONFIG`: path to the config folder in this repository
 - `$MODEL_OUTPUT_DIR`: path to output the model
 
-### Generate Model For Spring Apps
+### 2. Generate Model For Spring Apps
 ```
-java -jar averroes-gencg-0.0.1-jar-with-dependencies.jar -f SPRING-j system
+java -jar averroes-gencg-0.0.1-jar-with-dependencies.jar -f SPRING -j system
 -a $APP -c $CONFIG -o $MODEL_OUTPUT_DIR
 ```
-- `$APp`: path to your Spring app JAR file
+- `$APP`: path to your Spring app JAR file
 - `$CONFIG`: path to the config folder in this repository
 - `$MODEL_OUTPUT_DIR`: path to output the model
 
 ## Build 
-Make sure you have Maven installed. 
+Make sure you have Maven (3.8.5 worked for me) installed. 
 1. Build soot and install
 ```
 git clone https://github.com/soot-oss/soot.git
@@ -42,7 +42,11 @@ cd ..
 mvn install -DskipTests
 ```
 
-# Auto-format Code
+### Auto-format Code
 ```
 mvn com.coveo:fmt-maven-plugin:format 
 ```
+# Publication 
+**Long-term Static Analysis Rule Quality Monitoring Using True Negatives**, 14/05/2023 - 20/05/2023, 45th International Conference on Software Engineering, Software Engineering in Practice (SEIP) Track, Melbourne, Australia.
+
+Linghui Luo, Rajdeep Mukherjee, Omer Tripp, Martin Schäf, Qiang Zhou, Daniel Sanchez
